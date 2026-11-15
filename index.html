@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2a9d6f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Estudos">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Plano de Estudos</title>
+<style>
+/* Layout: menu lateral fixo + área de conteúdo; no celular o menu vira gaveta. Cada disciplina tem um matiz (--h) para os cartões. */
+:root{--bg:#f5f7f6;--card:#fff;--side:#fff;--ink:#1f2a33;--muted:#6b7680;--line:#e3e8e6;--accent:#2a9d6f;--accent-ink:#1f7a56;--accent-soft:#e2f4ec;--good:#2a9d6f;--bad:#d24b4b;--warn:#b7791f;--aviso:#fff4d6;--good-soft:#dff3e8;--bad-soft:#f9e1e0;--warn-soft:#faefd9;--soft:#eef2f1;--card-l:92%;--card-s:70%;--card-b:76%;--card-ink:28%;color-scheme:light}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1513;--card:#161e1b;--side:#131a18;--ink:#e3ebe7;--muted:#93a29c;--line:#26322e;--accent:#3fbf8a;--accent-ink:#7fdcb4;--accent-soft:#183329;--good:#4cc794;--bad:#ec7a7a;--warn:#e0a54f;--aviso:#3a2f10;--good-soft:#173126;--bad-soft:#3b2121;--warn-soft:#382c16;--soft:#1b2522;--card-l:22%;--card-s:32%;--card-b:34%;--card-ink:86%;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1513;--card:#161e1b;--side:#131a18;--ink:#e3ebe7;--muted:#93a29c;--line:#26322e;--accent:#3fbf8a;--accent-ink:#7fdcb4;--accent-soft:#183329;--good:#4cc794;--bad:#ec7a7a;--warn:#e0a54f;--aviso:#3a2f10;--good-soft:#173126;--bad-soft:#3b2121;--warn-soft:#382c16;--soft:#1b2522;--card-l:22%;--card-s:32%;--card-b:34%;--card-ink:86%;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.45}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100%}
+.side{background:var(--side);border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.marca{display:flex;align-items:center;gap:10px;padding:4px 8px 14px;font-weight:700;font-size:17px;color:var(--accent-ink)}
+.marca img{width:30px;height:30px;border-radius:8px}
+.plano-atual{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:var(--bg);cursor:pointer;text-align:left;color:var(--ink);width:100%;font:inherit}
+.plano-atual b{display:block;font-size:13.5px}
+.plano-atual span{font-size:12px;color:var(--muted)}
+.nav{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink);background:transparent;border:0;font:inherit;font-size:14px;cursor:pointer;width:100%;text-align:left}
+.nav svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--muted)}
+.nav:hover{background:var(--soft)}
+.nav.on{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav.on svg{color:var(--accent-ink)}
+.nav .qtd{margin-left:auto;font-size:11.5px;font-weight:700;background:var(--warn-soft);color:var(--warn);border-radius:999px;padding:1px 7px}
+.side .sec{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:14px 10px 4px}
+.topo{display:none}
+.conteudo{min-width:0;display:flex;flex-direction:column}
+main{width:100%;max-width:1240px;margin:0 auto;padding:22px 26px 80px;display:grid;gap:16px}
+.titulo-pg{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.titulo-pg h1{font-size:22px;margin:0}
+.titulo-pg p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.card h2{font-size:12px;margin:0 0 12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.card h3{font-size:15px;margin:0 0 6px}
+.big{font-size:26px;font-weight:700;margin:2px 0;font-variant-numeric:tabular-nums}
+.pos{color:var(--good)}.neg{color:var(--bad)}.warn{color:var(--warn)}
+button{font:inherit;border:0;border-radius:9px;padding:8px 14px;background:var(--accent);color:#fff;cursor:pointer;white-space:nowrap;font-weight:600}
+button:hover{filter:brightness(1.05)}
+button.ghost{background:transparent;color:var(--accent-ink);border:1px solid var(--line)}
+button.danger{background:var(--bad)}
+button.small{padding:4px 10px;font-size:12.5px}
+button.icone{background:transparent;border:1px solid var(--line);color:var(--ink);padding:5px 10px;font-weight:700}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,.dcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select,textarea{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:9px;width:100%;background:var(--card);color:var(--ink)}
+input[type=checkbox],input[type=radio]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+label{display:grid;gap:4px;font-size:12.5px;color:var(--muted)}
+form.fields,.filtros{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:top}
+th{color:var(--muted);font-weight:700;white-space:nowrap;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bar{height:7px;background:var(--line);border-radius:4px;overflow:hidden;min-width:60px}
+.bar>div{height:100%;background:var(--accent);border-radius:4px}
+.muted{color:var(--muted);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.chip.ok{background:var(--good-soft);color:var(--good)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.acc{background:var(--accent-soft);color:var(--accent-ink)}
+.chip.tag{letter-spacing:.05em;text-transform:uppercase;font-size:10.5px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:hsl(var(--h) 60% 55%);flex:none}
+p{margin:6px 0}
+[hidden]{display:none!important}
+.aviso{background:var(--aviso);border:1px solid #e0a100;border-radius:10px;padding:10px 14px;margin:14px 26px 0;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.aviso button{background:#b07d00}
+.dica{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);color:var(--ink);border-radius:12px;padding:10px 14px;font-size:13.5px}
+/* cartões de sessão coloridos por disciplina */
+.dcard{white-space:normal;background:hsl(var(--h) var(--card-s) var(--card-l));border:1px solid hsl(var(--h) 40% var(--card-b));border-radius:10px;padding:8px 9px;font-size:12.5px;cursor:pointer;display:grid;gap:3px;text-align:left;color:var(--ink);width:100%;font-weight:400}
+.dcard .dn{font-weight:700;color:hsl(var(--h) 45% var(--card-ink));font-size:12px}
+.dcard .tp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dcard .mt{display:flex;gap:8px;color:var(--muted);font-size:11.5px;flex-wrap:wrap}
+.dcard.feita{opacity:.62}
+.dcard.feita .tp{text-decoration:line-through}
+.dcard.atrasada{box-shadow:inset 3px 0 0 var(--bad)}
+.tcard{white-space:normal;text-align:left;background:var(--soft);border:1px dashed var(--line);border-radius:10px;padding:8px 9px;font-size:12.5px;display:flex;gap:8px;align-items:flex-start}
+/* planejamento semanal */
+.plan{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start}
+.semnav{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.semnav .mes{font-size:17px;font-weight:700}
+.semnav .faixa{font-size:12px;color:var(--muted)}
+.redondo{width:30px;height:30px;border-radius:50%;padding:0;display:grid;place-items:center;background:var(--accent);font-size:17px;line-height:1}
+.anel{width:34px;height:34px}
+.semana-wrap{overflow-x:auto;margin-top:14px;padding-bottom:4px}
+.semana-grid{display:grid;grid-template-columns:repeat(7,minmax(128px,1fr));gap:8px}
+.dia{display:grid;gap:7px;align-content:start;min-width:0}
+.dia .cab{text-align:center;padding:6px 4px;border-radius:10px;background:var(--soft)}
+.dia .cab b{display:block;font-size:13px}
+.dia .cab span{font-size:11px;color:var(--muted)}
+.dia.hoje .cab{background:var(--accent);color:#fff}
+.dia.hoje .cab span{color:#fff;opacity:.9}
+.dia .vazio{color:var(--muted);font-size:12px;text-align:center;padding:10px 0}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:12px}
+.cal .h{color:var(--muted);font-weight:700;font-size:10.5px;padding:4px 0}
+.cal button{background:transparent;color:var(--ink);padding:5px 0;border-radius:8px;font-weight:500;position:relative}
+.cal button.fora{color:var(--muted);opacity:.5}
+.cal button.sem{background:var(--accent-soft)}
+.cal button.hj{background:var(--accent);color:#fff;font-weight:700}
+.cal button i{position:absolute;bottom:2px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--accent)}
+.distr{display:grid;gap:7px;font-size:13px}
+.distr div{display:flex;gap:8px;align-items:center}
+.distr b{margin-left:auto;font-weight:600;font-variant-numeric:tabular-nums}
+/* listas */
+.lin{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px 14px;padding:12px 0;border-top:1px solid var(--line);align-items:center}
+.lin:first-child{border-top:0}
+.lin .ic{width:38px;height:38px;border-radius:10px;background:hsl(var(--h) var(--card-s) var(--card-l));border:1px solid hsl(var(--h) 40% var(--card-b));display:grid;place-items:center;font-weight:800;font-size:11px;color:hsl(var(--h) 45% var(--card-ink))}
+.lin .tt{font-weight:600}
+.lin .ds{color:hsl(var(--h) 45% var(--card-ink));font-weight:600;font-size:13px}
+.lin .ctl{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.lin input[type=date]{width:150px}
+.revs{display:flex;gap:4px}
+.revs button{padding:2px 7px;font-size:11.5px;background:var(--soft);color:var(--muted);border:1px solid var(--line);font-weight:600}
+.revs button.on{background:var(--good-soft);color:var(--good);border-color:transparent}
+.revs button:disabled{opacity:.4;cursor:default}
+.subabas{display:flex;gap:18px;border-bottom:1px solid var(--line);overflow-x:auto}
+.subabas button{background:transparent;color:var(--muted);border-radius:0;padding:8px 2px;border-bottom:2px solid transparent;font-weight:600}
+.subabas button.on{color:var(--accent-ink);border-bottom-color:var(--accent)}
+.subabas button span{font-size:11px;margin-left:4px;opacity:.8}
+details.semana{background:var(--card);border:1px solid var(--line);border-radius:14px}
+details.semana>summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:12px 16px}
+details.semana>summary::-webkit-details-marker{display:none}
+details.semana>summary b{font-size:15px}
+details.semana .corpo{padding:0 16px 8px}
+details.semana.atual{border-color:var(--accent)}
+.prog{display:flex;align-items:center;gap:8px;margin-left:auto;min-width:130px}
+.prog .bar{flex:1}
+.acc-linha{display:grid;grid-template-columns:minmax(120px,240px) 1fr 48px;gap:10px;align-items:center;font-size:13.5px;margin:7px 0}
+.acc-linha .trk{position:relative;height:12px;background:var(--soft);border-radius:6px}
+.acc-linha .trk i{position:absolute;inset:0 auto 0 0;border-radius:6px}
+.acc-linha .trk b{position:absolute;top:-3px;bottom:-3px;left:80%;width:2px;background:var(--ink);opacity:.45}
+.discs{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.disc{border-top:4px solid hsl(var(--h) 55% 60%)}
+ol.passos,ul.lista{margin:0;padding-left:20px;display:grid;gap:6px}
+code{font-size:12px;overflow-wrap:anywhere;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:10;background:#1f2a33;color:#fff;border-radius:10px;padding:8px 10px 8px 14px;display:flex;gap:10px;align-items:center;max-width:calc(100vw - 32px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.toast button{background:rgba(255,255,255,.18)}
+.modal{position:fixed;inset:0;background:rgba(10,20,15,.45);z-index:9;display:grid;place-items:center;padding:16px}
+.modal>.card{width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;display:grid;gap:10px}
+.planos{display:grid;gap:8px}
+.planos label{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:14px;cursor:pointer}
+.planos label.on{border-color:var(--accent);background:var(--accent-soft)}
+.fundo{display:none}
+@media(max-width:1100px){.plan{grid-template-columns:1fr}}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;left:0;top:0;bottom:0;z-index:20;width:260px;transform:translateX(-100%);transition:transform .2s}
+  body.menu .side{transform:none}
+  body.menu .fundo{display:block;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:19}
+  .topo{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--side);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  .topo b{font-size:15px}
+  .topo span{font-size:12px;color:var(--muted)}
+  main{padding:14px 12px 80px}
+  .aviso{margin:10px 12px 0}
+  .semana-grid{grid-template-columns:1fr}
+  .semana-wrap{overflow:visible}
+  .dia{grid-template-columns:72px minmax(0,1fr);align-items:start}
+  .dia .cab{grid-row:span 20}
+  .lin{grid-template-columns:auto minmax(0,1fr)}
+  .lin .ctl{grid-column:1/-1;justify-content:flex-start}
+  .acc-linha{grid-template-columns:1fr 44px}.acc-linha .trk{grid-column:1/-1;grid-row:2}
+  form.fields,.filtros{grid-template-columns:1fr 1fr}
+}
+@media(max-width:380px){form.fields,.filtros{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.side{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side" aria-label="Menu"></aside>
+  <div class="conteudo">
+    <div class="topo"><button class="icone" aria-label="Abrir menu" onclick="document.body.classList.add('menu')">☰</button><div><b id="topoTitulo"></b><br><span id="topoPlano"></span></div></div>
+    <div id="aviso"></div>
+    <main id="conteudo"></main>
+  </div>
+</div>
+<div class="fundo" onclick="document.body.classList.remove('menu')"></div>
+<div class="modal" id="modal" hidden onclick="if (event.target === this) fecharModal()"></div>
+<div class="toast" id="toast" hidden role="status"></div>
+<input type="file" id="fx" accept=".xlsx,.xlsm" hidden>
+<input type="file" id="fj" accept=".json,application/json" hidden>
+<script src="planos.js"></script>
+<script>
+/* ---------- utilidades ---------- */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+// "Hoje" pode ser fixado nos testes com window.HOJE.
+const hoje = () => { if (window.HOJE) return window.HOJE; const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+// Datas como texto AAAA-MM-DD; a conta é feita em UTC para não sofrer com horário de verão.
+const dt = s => { const [y, m, d] = s.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+const iso = d => d.toISOString().slice(0, 10);
+const addD = (s, n) => { const d = dt(s); d.setUTCDate(d.getUTCDate() + n); return iso(d); };
+const dsem = s => dt(s).getUTCDay();          // 0 = domingo
+const seg0 = s => (dsem(s) + 6) % 7;          // igual a DIA.DA.SEMANA(;3) da planilha: segunda = 0
+const diffD = (a, b) => Math.round((dt(b) - dt(a)) / 864e5);
+const fmt = s => (s ? `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(0, 4)}` : '—');
+const fmtC = s => (s ? `${s.slice(8, 10)}/${s.slice(5, 7)}` : '—');
+const DIAS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+const pct = (a, b) => (b ? Math.round(a / b * 100) : 0);
+const agoraISO = () => new Date().toISOString();
+const ehData = s => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ''));
+
+/* ---------- dados ---------- */
+const KEY = 'est-dados-v1';
+const PL = Object.fromEntries(PLANOS.map(p => [p.id, p]));
+const blankPlano = p => ({ cfg: { inicio: p.inicio, ritmo: p.ritmo, alvo: p.alvo }, feitas: {}, revs: {}, tarefas: {}, notas: {},
+  questoes: [], escrita: {}, interesse: {}, taf: { sexo: 'M', alvos: {}, registros: [] } });
+const blank = () => ({ v: 1, ativo: PLANOS[0].id, planos: {} });
+function carregar() {
+  try { const t = localStorage.getItem(KEY); if (t) return Object.assign(blank(), JSON.parse(t)); } catch (e) {}
+  return blank();
+}
+let S = carregar();
+let falhaSalvar = false;
+function salvar() { try { localStorage.setItem(KEY, JSON.stringify(S)); falhaSalvar = false; } catch (e) { falhaSalvar = true; } }
+function commit() { S.modificadoEm = agoraISO(); salvar(); render(); agendarEnvio(); }
+const P = () => PL[S.ativo] || PLANOS[0];
+// Dados do plano ativo; cria o que faltar (plano novo ou campo novo de uma versão mais recente do app).
+function D(p = P()) {
+  if (!S.planos[p.id]) S.planos[p.id] = blankPlano(p);
+  const d = S.planos[p.id], b = blankPlano(p);
+  for (const k in b) if (d[k] === undefined || d[k] === null) d[k] = b[k];
+  for (const k in b.cfg) if (d.cfg[k] === undefined) d.cfg[k] = b.cfg[k];
+  for (const k in b.taf) if (d.taf[k] === undefined) d.taf[k] = b.taf[k];
+  return d;
+}
+const nomeDisc = (p, k) => (p.disciplinas.find(x => x.k === k) || { nome: k }).nome;
+
+/* ---------- cálculos (os mesmos da planilha) ---------- */
+const REVS = [[1, '24 h', '10 min'], [7, '7 dias', '15 min'], [30, '30 dias', '20 min']];
+// Data prevista da sessão n (1, 2, ...): DIATRABALHOTOTAL(Início - 1; INT((n-1)/Ritmo) + 1), sem feriados.
+function datasPrevistas(inicio, ritmo, total) {
+  const out = []; let cur = addD(inicio, -1), k = 0;
+  for (let i = 0; i < total; i++) {
+    const alvo = Math.floor(i / ritmo) + 1;
+    while (k < alvo) { cur = addD(cur, 1); if (seg0(cur) < 5) k++; }
+    out.push(cur);
+  }
+  return out;
+}
+function calc(p = P(), d = D(p), h = hoje()) {
+  const ritmo = Number(d.cfg.ritmo) === 3 ? 3 : 2, ini = ehData(d.cfg.inicio) ? d.cfg.inicio : p.inicio;
+  const seg = addD(ini, -seg0(ini));
+  const datas = datasPrevistas(ini, ritmo, p.sessoes.length);
+  const linhas = p.sessoes.map((s, i) => {
+    const data = datas[i], semana = Math.floor(diffD(seg, data) / 7) + 1, feita = d.feitas[s.id] || '';
+    const revs = REVS.map(([n]) => ({ n, data: feita ? addD(feita, n) : '', feito: !!d.revs[s.id + '@' + n] }));
+    const prox = feita ? (revs.find(r => !r.feito) || null) : null;
+    const sit = feita ? (!prox ? 'Ciclo completo' : (prox.data <= h ? 'Revisão vencida' : 'Em dia')) : (data < h ? 'Atrasada' : 'Pendente');
+    return { s, i, data, semana, feita, revs, prox, sit };
+  });
+  const fimTeoria = datas[datas.length - 1], ini2 = addD(fimTeoria, -seg0(fimTeoria) + 7), fimPlano = addD(ini2, 27);
+  const semTeoria = linhas[linhas.length - 1].semana;
+  const fase = n => (n <= semTeoria ? 'Teoria' : n <= semTeoria + 3 ? 'Revisão' : n === semTeoria + 4 ? p.fase3 : '—');
+  const temas = p.escrita.temas;
+  const semanas = Array.from({ length: Math.max(p.semanas, semTeoria + 4) }, (_, j) => {
+    const n = j + 1, f = fase(n);
+    const tarefa = f === 'Teoria' ? p.sabTeoria : f === 'Revisão' ? p.sabSimulado : f === p.fase3 ? 'Ver a tabela da Fase 3' : p.sabDepois;
+    const tema = (f === 'Teoria' || f === 'Revisão') && n >= 3 ? temas[(n - 3) % temas.length][0] : '';
+    return { n, sabado: addD(seg, 7 * j + 5), fase: f, tarefa, tema };
+  });
+  const dias2 = datasPrevistas(ini2, 1, 15).map((data, i) => ({ i, data, a: p.rotacao[2 * i], b: p.rotacao[2 * i + 1] }));
+  const dias3 = p.final.map((t, j) => ({ j, data: addD(ini2, 21 + j), t }));
+  const porDisc = p.disciplinas.map(x => {
+    const ls = linhas.filter(l => l.s.d === x.k), qs = d.questoes.filter(q => q.disc === x.k);
+    const n = qs.reduce((a, q) => a + (Number(q.n) || 0), 0), ok = qs.reduce((a, q) => a + (Number(q.ok) || 0), 0);
+    return { ...x, sessoes: ls.length, feitas: ls.filter(l => l.feita).length, q: n, ok, acerto: n ? ok / n : null };
+  });
+  const qn = porDisc.reduce((a, x) => a + x.q, 0), qok = porDisc.reduce((a, x) => a + x.ok, 0);
+  const alvo = ehData(d.cfg.alvo) ? d.cfg.alvo : '';
+  return {
+    ritmo, ini, seg, linhas, fimTeoria, ini2, fimPlano, semTeoria, semanas, dias2, dias3, porDisc, alvo,
+    feitas: linhas.filter(l => l.feita).length, total: linhas.length,
+    paginas: linhas.filter(l => l.feita).reduce((a, l) => a + l.s.p, 0), paginasTotal: linhas.reduce((a, l) => a + l.s.p, 0),
+    vencidas: linhas.filter(l => l.sit === 'Revisão vencida').length, atrasadas: linhas.filter(l => l.sit === 'Atrasada').length,
+    diasAlvo: alvo ? diffD(h, alvo) : null, folga: alvo ? diffD(fimPlano, alvo) : null,
+    acerto: qn ? qok / qn : null, questoes: qn
+  };
+}
+const sitClasse = s => ({ 'Atrasada': 'bad', 'Revisão vencida': 'warn', 'Em dia': 'ok', 'Ciclo completo': 'ok' }[s] || '');
+const acertoClasse = a => (a === null ? '' : a >= 0.8 ? 'ok' : a >= 0.65 ? 'warn' : 'bad');
+const acertoTexto = a => (a === null ? 'Sem registro' : a >= 0.8 ? 'Meta atingida' : a >= 0.65 ? 'Atenção' : 'Prioridade');
+
+// Revisões de hoje: todas as vencidas e não feitas, das mais antigas para as mais novas.
+function revisoesDevidas(c, h = hoje()) {
+  const out = [];
+  c.linhas.forEach(l => { if (l.feita) l.revs.forEach((r, k) => { if (!r.feito && r.data <= h) out.push({ l, r, k }); }); });
+  return out.sort((a, b) => (a.r.data < b.r.data ? -1 : a.r.data > b.r.data ? 1 : 0));
+}
+// O que o calendário pede para o dia: sábado da semana, dia da Fase 2 ou da Fase 3.
+function agendaDoDia(c, h = hoje()) {
+  const out = [];
+  const sem = c.semanas.find(w => w.sabado === h);
+  if (sem && sem.fase !== '—') {
+    out.push({ chave: 'sab-' + sem.n, t: sem.tarefa });
+    if (sem.tema) out.push({ chave: 'esc-sab-' + sem.n, t: `${P().escrita.nome}: ${sem.tema}` });
+  }
+  const d2 = c.dias2.find(x => x.data === h);
+  if (d2) out.push({ chave: 'f2-' + d2.i, t: `Revisão: ${nomeDisc(P(), d2.a)} + ${nomeDisc(P(), d2.b)}. Resumos, caderno de erros, lei seca e 40 questões` });
+  const d3 = c.dias3.find(x => x.data === h);
+  if (d3) out.push({ chave: 'f3-' + d3.j, t: d3.t });
+  return out;
+}
+// Bússola de carreira: média entre o acerto (0 a 5) e o interesse mensal (1 a 5) por trilha.
+function bussola(p = P(), d = D(p), c = calc(p, d)) {
+  if (!p.bussola) return [];
+  const ac = Object.fromEntries(c.porDisc.map(x => [x.k, x.acerto]));
+  const linhas = p.bussola.map(([nome, carreiras, keys], i) => {
+    const vals = keys.map(k => ac[k]).filter(v => v !== null && v !== undefined);
+    const acerto = vals.length ? vals.reduce((a, v) => a + v, 0) / vals.length : null;
+    const notas = Object.values(d.interesse).map(m => Number(m && m['t' + i])).filter(v => v >= 1 && v <= 5);
+    const interesse = notas.length ? notas.reduce((a, v) => a + v, 0) / notas.length : null;
+    const pontos = acerto === null && interesse === null ? null : acerto === null ? interesse : interesse === null ? acerto * 5 : (acerto * 5 + interesse) / 2;
+    return { i, nome, carreiras, keys, acerto, interesse, pontos };
+  });
+  const ord = linhas.filter(l => l.pontos !== null).map(l => l.pontos).sort((a, b) => b - a);
+  linhas.forEach(l => { l.posicao = l.pontos === null ? null : ord.indexOf(l.pontos) + 1; });
+  return linhas;
+}
+const anoPlano = p => Number((D(p).cfg.inicio || p.inicio).slice(0, 4));
+// TAF: índice de cada teste conforme o sexo; quando o edital não trouxe a marca, vale a que você digitou.
+function tafIndices(p = P(), d = D(p)) {
+  return (p.taf || []).map(([teste, un, m, f, maior], i) => {
+    const sx = d.taf.sexo === 'F' ? 'F' : 'M';
+    const doPlano = sx === 'F' ? f : m;
+    const valor = doPlano !== null && doPlano !== undefined ? doPlano : (d.taf.alvos[i + sx] ?? '');
+    return { i, teste, un, maior, valor: valor === '' ? null : Number(valor), editavel: doPlano === null || doPlano === undefined };
+  });
+}
+const tafNoIndice = (idx, v) => idx.reduce((a, t, i) => a + (t.valor === null || v[i] === '' || v[i] === null || v[i] === undefined ? 0 :
+  (t.maior ? Number(v[i]) >= t.valor : Number(v[i]) <= t.valor) ? 1 : 0), 0);
+
+/* ---------- ações ---------- */
+let desfazerSnap = null, toastTimer = null;
+function ponto() { desfazerSnap = JSON.stringify(S); }
+function avisar(texto, comDesfazer) {
+  const el = $('toast');
+  el.innerHTML = `<span>${esc(texto)}</span>${comDesfazer && desfazerSnap ? '<button class="small" onclick="desfazer()">Desfazer</button>' : ''}<button class="small" aria-label="Fechar aviso" onclick="$(\'toast\').hidden=true">✕</button>`;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 8000);
+}
+function desfazer() {
+  if (!desfazerSnap) return;
+  S = Object.assign(blank(), JSON.parse(desfazerSnap));
+  desfazerSnap = null;
+  $('toast').hidden = true;
+  commit();
+}
+function concluir(id, data) {
+  const d = D();
+  if (data !== undefined && data !== '' && !ehData(data)) return;
+  ponto();
+  if (!data) {
+    delete d.feitas[id];
+    REVS.forEach(([n]) => delete d.revs[id + '@' + n]);
+    commit();
+    return avisar(`Sessão ${id} voltou a ficar pendente.`, true);
+  }
+  d.feitas[id] = data;
+  commit();
+  avisar(`Sessão ${id} concluída. Revisão de 24 h em ${fmtC(addD(data, 1))}.`, true);
+}
+function marcarRev(id, n) {
+  const d = D(), k = id + '@' + n;
+  if (!d.feitas[id]) return;
+  if (d.revs[k]) delete d.revs[k]; else d.revs[k] = hoje();
+  commit();
+}
+function marcarTarefa(chave, on) {
+  const d = D();
+  if (on) d.tarefas[chave] = hoje(); else delete d.tarefas[chave];
+  commit();
+}
+function definirNota(chave, v) {
+  const d = D();
+  if (v === '' || v === null) delete d.notas[chave]; else d.notas[chave] = Number(v);
+  commit();
+}
+function setCfg(campo, v) {
+  const d = D();
+  if (campo === 'ritmo') d.cfg.ritmo = Number(v) === 3 ? 3 : 2;
+  else if (campo === 'inicio') { if (!ehData(v)) return; d.cfg.inicio = v; verSemana = ''; }
+  else if (campo === 'alvo') d.cfg.alvo = ehData(v) ? v : '';
+  commit();
+}
+function trocarPlano(id) { if (!PL[id]) return; S.ativo = id; filtro = { sit: '', disc: '', busca: '' }; verSemana = ''; commit(); }
+function addQuestoes(e) {
+  e.preventDefault();
+  const f = e.target, n = parseInt(f.q_n.value, 10), ok = parseInt(f.q_ok.value, 10);
+  const msg = $('qMsg');
+  if (!(n > 0) || !(ok >= 0) || ok > n) { msg.textContent = 'Confira os números: os acertos ficam entre 0 e o total de questões.'; msg.className = 'muted neg'; return; }
+  ponto();
+  D().questoes.push({ id: uid(), data: ehData(f.q_data.value) ? f.q_data.value : hoje(), disc: f.q_disc.value, n, ok,
+    temas: f.q_temas.value.trim().slice(0, 300), caderno: f.q_cad.value.trim().slice(0, 120) });
+  commit();
+  avisar(`Registrado: ${ok} de ${n} (${pct(ok, n)}%) em ${nomeDisc(P(), f.q_disc.value)}.`, true);
+}
+function delQuestao(id) { ponto(); const d = D(); d.questoes = d.questoes.filter(q => q.id !== id); commit(); avisar('Registro apagado.', true); }
+function setEscrita(i, campo, v) {
+  const d = D(), e = Object.assign({ data: '', nota: '', obs: '' }, d.escrita[i]);
+  e[campo] = campo === 'nota' ? (v === '' ? '' : Math.max(0, Math.min(100, Number(v)))) : campo === 'data' ? (ehData(v) ? v : '') : String(v).slice(0, 400);
+  if (!e.data && e.nota === '' && !e.obs) delete d.escrita[i]; else d.escrita[i] = e;
+  commit();
+}
+function setInteresse(mes, campo, v) {
+  const d = D(), m = Object.assign({}, d.interesse[mes]);
+  if (campo === 'obs') { if (v.trim()) m.obs = v.slice(0, 400); else delete m.obs; }
+  else if (v === '') delete m[campo]; else m[campo] = Number(v);
+  if (Object.keys(m).length) d.interesse[mes] = m; else delete d.interesse[mes];
+  commit();
+}
+function setSexo(v) { D().taf.sexo = v === 'F' ? 'F' : 'M'; commit(); }
+function setAlvoTaf(chave, v) { const d = D(); if (v === '') delete d.taf.alvos[chave]; else d.taf.alvos[chave] = Number(v); commit(); }
+function addTaf(e) {
+  e.preventDefault();
+  const f = e.target, idx = tafIndices();
+  const v = idx.map(t => (f['taf_' + t.i].value === '' ? '' : Number(f['taf_' + t.i].value)));
+  if (v.every(x => x === '')) { $('tafMsg').textContent = 'Preencha pelo menos um teste.'; return; }
+  ponto();
+  D().taf.registros.push({ id: uid(), data: ehData(f.taf_data.value) ? f.taf_data.value : hoje(), v, obs: f.taf_obs.value.trim().slice(0, 200) });
+  commit();
+  avisar(`Treino registrado: ${tafNoIndice(idx, v)} de ${idx.length} testes no índice.`, true);
+}
+function delTaf(id) { ponto(); const d = D(); d.taf.registros = d.taf.registros.filter(r => r.id !== id); commit(); avisar('Registro apagado.', true); }
+function zerarPlano() {
+  if (!confirm(`Apagar todo o progresso do plano "${P().nome}"? Os outros planos não mudam.`)) return;
+  ponto(); S.planos[P().id] = blankPlano(P()); commit(); avisar('Progresso do plano apagado.', true);
+}
+function setTema(t) {
+  try { if (t) localStorage.setItem('est-tema', t); else localStorage.removeItem('est-tema'); } catch (e) {}
+  aplicarTema(); render();
+}
+function aplicarTema() {
+  let t = ''; try { t = localStorage.getItem('est-tema') || ''; } catch (e) {}
+  if (t) document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
+}
+
+/* ---------- backup .json ---------- */
+function exportar() {
+  S.ultimoBackup = hoje(); salvar();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' }));
+  a.download = `backup-estudos-${hoje()}.json`;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  render();
+}
+function importarJSON(input) {
+  const f = input.files[0]; input.value = '';
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (!d || typeof d.planos !== 'object') throw new Error('formato');
+      if (!confirm('Substituir todos os dados atuais pelo backup?')) return;
+      ponto(); S = Object.assign(blank(), d); commit(); avisar('Backup restaurado.', true);
+    } catch (e) { avisar('Esse arquivo não é um backup do Plano de Estudos.'); }
+  };
+  r.readAsText(f);
+}
+
+/* ---------- importar progresso da planilha (.xlsm/.xlsx) ---------- */
+const SHEETJS = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+const carregando = {};
+function carregarScript(url, global) {
+  if (window[global]) return Promise.resolve(window[global]);
+  carregando[url] = carregando[url] || new Promise((ok, falha) => {
+    const s = document.createElement('script');
+    s.src = url; s.onload = () => ok(window[global]);
+    s.onerror = () => { delete carregando[url]; s.remove(); falha(new Error('internet')); };
+    document.head.appendChild(s);
+  });
+  return carregando[url];
+}
+let impMsg = '';
+const setImp = t => { impMsg = t; const el = $('impStatus'); if (el) el.textContent = t; };
+// Número de série do Excel (dias desde 30/12/1899) para AAAA-MM-DD.
+const serialISO = v => {
+  if (v instanceof Date) return iso(new Date(Date.UTC(v.getFullYear(), v.getMonth(), v.getDate())));
+  if (typeof v === 'number' && v > 20000 && v < 80000) return iso(new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 864e5));
+  if (typeof v === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(v.trim())) { const [dd, mm, aa] = v.trim().split('/'); return `${aa}-${mm}-${dd}`; }
+  return '';
+};
+function detectarPlano(wb) {
+  const painel = wb.Sheets['Painel'], titulo = painel && painel.A1 ? String(painel.A1.v).trim() : '';
+  const porTitulo = PLANOS.find(p => p.titulo === titulo);
+  if (porTitulo) return porTitulo;
+  const cr = wb.Sheets['Cronograma'];
+  if (!cr) return null;
+  const codigos = new Set();
+  for (let r = 5; r < 1000; r++) { const c = cr['E' + r]; if (!c) break; codigos.add(String(c.v)); }
+  let melhor = null, nota = 0;
+  PLANOS.forEach(p => { const n = p.sessoes.filter(s => codigos.has(s.id)).length / p.sessoes.length; if (n > nota) { nota = n; melhor = p; } });
+  return nota > 0.9 ? melhor : null;
+}
+// Lê o progresso no mesmo layout gerado para as planilhas (Painel, Cronograma, Semanas, Questões, escrita, Bússola, TAF).
+function lerPlanilha(wb, p) {
+  const v = (ws, a) => (ws && ws[a] ? ws[a].v : undefined);
+  const col = n => { let s = ''; n++; while (n) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+  const d = blankPlano(p), cont = { sessoes: 0, revisoes: 0, questoes: 0, escrita: 0, tarefas: 0 };
+  const painel = wb.Sheets['Painel'];
+  const ini = serialISO(v(painel, 'B5')); if (ini) d.cfg.inicio = ini;
+  const rit = Number(v(painel, 'B6')); if (rit === 2 || rit === 3) d.cfg.ritmo = rit;
+  const alvo = serialISO(v(painel, 'B7')); d.cfg.alvo = alvo || '';
+  const ids = new Set(p.sessoes.map(s => s.id));
+  const cr = wb.Sheets['Cronograma'];
+  for (let r = 5; r < 1000; r++) {
+    const id = v(cr, 'E' + r); if (id === undefined || id === '') break;
+    if (!ids.has(String(id))) continue;
+    const feita = serialISO(v(cr, 'M' + r));
+    if (!feita) continue;
+    d.feitas[id] = feita; cont.sessoes++;
+    [['O', 1], ['Q', 7], ['S', 30]].forEach(([c, n]) => { if (String(v(cr, c + r) || '').trim().toLowerCase() === 'sim') { d.revs[id + '@' + n] = addD(feita, n); cont.revisoes++; } });
+  }
+  const sem = wb.Sheets['Semanas'], W = p.semanas;
+  if (sem) {
+    const sim = (c, r) => String(v(sem, c + r) || '').trim().toLowerCase() === 'sim';
+    for (let n = 1; n <= W; n++) {
+      if (sim('F', 4 + n)) { d.tarefas['sab-' + n] = hoje(); cont.tarefas++; }
+      const nota = v(sem, 'G' + (4 + n)); if (typeof nota === 'number') d.notas['sim-' + n] = nota;
+    }
+    const r0 = 4 + W + 3, r1 = r0 + 18;
+    for (let i = 0; i < 15; i++) if (sim('F', r0 + 2 + i)) { d.tarefas['f2-' + i] = hoje(); cont.tarefas++; }
+    for (let j = 0; j < 7; j++) if (sim('F', r1 + 2 + j)) { d.tarefas['f3-' + j] = hoje(); cont.tarefas++; }
+  }
+  const qs = wb.Sheets['Questões'], porNome = Object.fromEntries(p.disciplinas.map(x => [x.nome, x.k]));
+  for (let r = 5; r <= 600 && qs; r++) {
+    const nome = v(qs, 'B' + r), n = Number(v(qs, 'C' + r)), ok = Number(v(qs, 'D' + r)), temas = String(v(qs, 'F' + r) || '');
+    if (!nome || !(n > 0) || temas.startsWith('Exemplo')) continue;
+    if (!porNome[nome]) continue;
+    d.questoes.push({ id: uid() + r, data: serialISO(v(qs, 'A' + r)) || hoje(), disc: porNome[nome], n, ok: Math.min(n, Math.max(0, ok || 0)), temas, caderno: String(v(qs, 'G' + r) || '') });
+    cont.questoes++;
+  }
+  const es = wb.Sheets[p.escrita.nome];
+  p.escrita.temas.forEach((t, i) => {
+    const r = 12 + i, data = serialISO(v(es, 'E' + r)), nota = v(es, 'F' + r), obs = v(es, 'G' + r);
+    if (data || typeof nota === 'number' || obs) { d.escrita[i] = { data: data || '', nota: typeof nota === 'number' ? nota : '', obs: obs ? String(obs) : '' }; cont.escrita++; }
+  });
+  const bu = wb.Sheets['Bússola'];
+  if (bu && p.bussola) {
+    const ano = Number(d.cfg.inicio.slice(0, 4)), nT = p.bussola.length;
+    for (let i = 0; i < 12; i++) {
+      const r = 13 + i, m = {};
+      for (let t = 0; t < nT; t++) { const x = Number(v(bu, col(1 + t) + r)); if (x >= 1 && x <= 5) m['t' + t] = x; }
+      const obs = v(bu, col(1 + nT) + r); if (obs) m.obs = String(obs);
+      if (Object.keys(m).length) d.interesse[`${ano}-${pad(i + 1)}`] = m;
+    }
+  }
+  const tf = wb.Sheets['TAF'];
+  if (tf && p.taf) {
+    const nt = p.taf.length;
+    d.taf.sexo = String(v(tf, 'B4') || 'M').trim().toUpperCase() === 'F' ? 'F' : 'M';
+    p.taf.forEach(([, , m, f], i) => {
+      if (m === null) { const x = v(tf, 'C' + (7 + i)); if (typeof x === 'number') d.taf.alvos[i + 'M'] = x; }
+      if (f === null) { const x = v(tf, 'D' + (7 + i)); if (typeof x === 'number') d.taf.alvos[i + 'F'] = x; }
+    });
+    for (let r = 12 + nt; r < 12 + nt + 40; r++) {
+      const data = serialISO(v(tf, 'A' + r)); if (!data) continue;
+      const vals = p.taf.map((_, i) => { const x = v(tf, col(1 + i) + r); return typeof x === 'number' ? x : ''; });
+      d.taf.registros.push({ id: uid() + r, data, v: vals, obs: String(v(tf, col(2 + nt) + r) || '') });
+    }
+  }
+  return { d, cont };
+}
+async function importarPlanilha(input) {
+  const f = input.files[0]; input.value = '';
+  if (!f) return;
+  setImp('Lendo a planilha…');
+  let XLSX;
+  try { XLSX = await carregarScript(SHEETJS, 'XLSX'); } catch (e) { return setImp('Sem internet para carregar o leitor de planilhas. Conecte e tente de novo.'); }
+  let wb;
+  try { wb = XLSX.read(new Uint8Array(await f.arrayBuffer()), { type: 'array' }); } catch (e) { return setImp('Não consegui abrir esse arquivo. Use a planilha .xlsm ou .xlsx do plano.'); }
+  const p = detectarPlano(wb);
+  if (!p) return setImp('Essa planilha não é de nenhum dos planos do app.');
+  const { d, cont } = lerPlanilha(wb, p);
+  if (!confirm(`Importar a planilha para o plano "${p.nome}"?\n\n${cont.sessoes} sessões concluídas, ${cont.revisoes} revisões, ${cont.questoes} baterias de questões, ${cont.escrita} textos e ${cont.tarefas} tarefas.\n\nO progresso atual deste plano no app será substituído. Os outros planos não mudam.`)) return setImp('Importação cancelada.');
+  ponto();
+  S.planos[p.id] = d; S.ativo = p.id;
+  commit();
+  setImp(`Planilha importada para "${p.nome}": ${cont.sessoes} sessões concluídas e ${cont.questoes} baterias de questões.`);
+  avisar('Planilha importada.', true);
+}
+
+/* ---------- telas ---------- */
+let aba = 'inicio';
+let filtro = { sit: '', disc: '', busca: '' };
+let revAba = 'hoje', verSemana = '', verMes = '', modalId = null;
+const ICONES = {
+  inicio: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  planejamento: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  revisoes: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+  crono: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+  disciplinas: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5V21h16"/>',
+  questoes: '<path d="M4 20V11M10 20V5M16 20v-7M2 20h20"/>',
+  escrita: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  semanas: '<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>',
+  bussola: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  taf: '<path d="M22 12h-4l-3 8-6-16-3 8H2"/>',
+  metodo: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
+  ajustes: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+};
+const ABAS = () => [
+  ['inicio', 'Início'], ['planejamento', 'Planejamento'], ['revisoes', 'Revisões'], ['crono', 'Cronograma'], ['disciplinas', 'Disciplinas'],
+  ['-', 'Desempenho'], ['questoes', 'Questões'], ['escrita', P().escrita.nome], ['semanas', 'Simulados e fases'],
+  ...(P().bussola ? [['bussola', 'Bússola de carreira']] : []), ...(P().taf ? [['taf', 'Teste físico (TAF)']] : []),
+  ['-', 'Mais'], ['metodo', 'Método'], ['ajustes', 'Ajustes']];
+function ir(k) { aba = k; modalId = null; document.body.classList.remove('menu'); try { localStorage.setItem('est-aba', k); } catch (e) {} render(); window.scrollTo(0, 0); }
+
+const HUES = [212, 96, 272, 28, 356, 46, 186, 18, 200, 322, 150, 248];
+const hue = k => HUES[Math.max(0, P().disciplinas.findIndex(x => x.k === k)) % HUES.length];
+const dur = min => (min >= 60 ? `${Math.floor(min / 60)}h${min % 60 ? pad(min % 60) + 'min' : ''}` : `${min}min`);
+const MIN_SESSAO = 80;
+const seg = s => addD(s, -seg0(s));
+const titulo = (t, sub, dir = '') => `<div class="titulo-pg"><div><h1>${esc(t)}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${dir}</div>`;
+const nomeMes = s => { const m = MESES[Number(s.slice(5, 7)) - 1]; return m[0].toUpperCase() + m.slice(1); };
+const MESES_LONGOS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+function dcard(l) {
+  const s = l.s, p = P();
+  return `<button type="button" class="dcard ${l.feita ? 'feita' : ''} ${l.sit === 'Atrasada' ? 'atrasada' : ''}" style="--h:${hue(s.d)}" onclick="abrirSessao('${s.id}')" aria-label="Sessão ${s.id}: ${esc(nomeDisc(p, s.d))}">
+    <span class="dn">${esc(nomeDisc(p, s.d))}</span><span class="mt"><span>${dur(MIN_SESSAO)}</span><span>${s.id}</span>${l.feita ? '<span>feita</span>' : ''}</span>
+    <span class="tp">${esc(s.itens[0].t)}</span>${s.p ? `<span class="mt">${s.p} p.</span>` : s.ext ? '<span class="mt">material externo</span>' : '<span class="mt">questões</span>'}</button>`;
+}
+function linSessao(l, completo) {
+  const s = l.s, p = P();
+  return `<div class="lin" style="--h:${hue(s.d)}"><input type="checkbox" ${l.feita ? 'checked' : ''} aria-label="Concluir sessão ${s.id}" onchange="concluir('${s.id}', this.checked ? hoje() : '')">
+    <div><div class="tt" style="${l.feita ? 'text-decoration:line-through;color:var(--muted)' : ''}">${esc(s.itens[0].t)}${s.itens.length > 1 ? ` <span class="muted">+${s.itens.length - 1}</span>` : ''}</div>
+      <div class="row"><span class="ds">${esc(nomeDisc(p, s.d))}</span><span class="muted">${s.id} · ${dur(MIN_SESSAO)} · ${s.p ? s.p + ' p.' : s.ext ? 'material externo' : 'questões'}</span>${l.sit === 'Atrasada' ? '<span class="chip bad">atrasada</span>' : ''}</div>
+      ${completo ? `<div class="muted" style="margin-top:4px">Depois: ${esc(s.q)}</div>` : ''}</div>
+    <div class="ctl"><button class="small ghost" onclick="abrirSessao('${s.id}')">Detalhes</button></div></div>`;
+}
+function abrirSessao(id) { modalId = id; desenharModal(); }
+function fecharModal() { modalId = null; $('modal').hidden = true; }
+function desenharModal() {
+  const m = $('modal');
+  if (!modalId) { m.hidden = true; return; }
+  const c = calc(), l = c.linhas.find(x => x.s.id === modalId);
+  if (!l) { fecharModal(); return; }
+  const s = l.s, p = P();
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-label="Sessão ${s.id}" style="--h:${hue(s.d)}">
+    <div class="row" style="justify-content:space-between"><span class="row"><span class="dot"></span><b>${esc(nomeDisc(p, s.d))}</b><span class="muted">${s.id}</span></span><button class="small ghost" onclick="fecharModal()" aria-label="Fechar">Fechar</button></div>
+    <div class="row"><span class="chip ${sitClasse(l.sit)}">${l.sit}</span><span class="muted">Prevista para ${DIAS[dsem(l.data)]}, ${fmt(l.data)} · semana ${l.semana} · ${dur(MIN_SESSAO)}</span></div>
+    <ol class="passos">${s.itens.map(it => `<li><b>${esc(it.t)}</b> <span class="muted">· ${esc(it.pp)}</span>${it.path ? `<br><code>${esc(it.path)}</code>` : ''}</li>`).join('')}</ol>
+    <div class="dica">Depois: ${esc(s.q)}</div>
+    <div class="row">${l.feita ? `<button class="ghost" onclick="concluir('${s.id}', '')">Marcar como pendente</button>` : `<button onclick="concluir('${s.id}', hoje())">Concluir hoje</button>`}
+      <label style="display:flex;gap:6px;align-items:center">Concluída em <input type="date" id="modal-data" value="${l.feita}" onchange="concluir('${s.id}', this.value)" style="width:160px"></label></div>
+    <div><div class="muted" style="margin-bottom:6px">Revisões</div><div class="revs">${l.revs.map(r => `<button type="button" class="${r.feito ? 'on' : ''}" ${l.feita ? '' : 'disabled'} onclick="marcarRev('${s.id}', ${r.n})">${REVS.find(x => x[0] === r.n)[1]}${r.data ? ' · ' + fmtC(r.data) : ''}</button>`).join('')}</div>
+      ${l.feita ? '' : '<p class="muted">As revisões ficam disponíveis depois de concluir a sessão.</p>'}</div>
+  </div>`;
+  m.hidden = false;
+}
+function irSemana(s) { verSemana = seg(s); verMes = verSemana.slice(0, 7); render(); }
+function passoSemana(n) { irSemana(addD(verSemana, 7 * n)); }
+function passoMes(n) { const [y, mo] = verMes.split('-').map(Number), k = y * 12 + mo - 1 + n; verMes = `${Math.floor(k / 12)}-${pad(k % 12 + 1)}`; render(); }
+function anel(frac) {
+  const r = 14, cc = 2 * Math.PI * r;
+  return `<svg class="anel" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="${r}" fill="none" stroke="var(--line)" stroke-width="4"/><circle cx="17" cy="17" r="${r}" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(cc * frac).toFixed(1)} ${cc.toFixed(1)}" transform="rotate(-90 17 17)"/></svg>`;
+}
+
+const V = {
+  inicio() {
+    const p = P(), d = D(), c = calc(), h = hoje();
+    const prox = c.linhas.filter(l => !l.feita).slice(0, c.ritmo);
+    const rev = revisoesDevidas(c, h), agenda = agendaDoDia(c, h);
+    const aviso = !c.alvo ? `Informe a ${p.alvoNome} em Ajustes.` : c.folga < 0
+      ? (c.ritmo === 2 ? `O plano passa da ${p.alvoNome}: mude o ritmo para 3 em Ajustes.` : `O plano passa da ${p.alvoNome}: use os sábados para adiantar sessões.`)
+      : `O plano termina ${c.folga} dias antes da ${p.alvoNome}.`;
+    return `${titulo('Início', `${DIAS[dsem(h)][0].toUpperCase() + DIAS[dsem(h)].slice(1)}, ${fmt(h)} · ${esc(p.titulo)}`)}
+    <section class="grid">
+      <div class="card"><h2>Sessões concluídas</h2><div class="big">${pct(c.feitas, c.total)}%</div><div class="muted">${c.feitas} de ${c.total}</div><div class="bar" style="margin-top:8px"><div style="width:${pct(c.feitas, c.total)}%"></div></div></div>
+      <div class="card"><h2>Revisões para hoje</h2><div class="big ${rev.length ? 'warn' : ''}">${rev.length}</div><div class="muted">${c.atrasadas} sessões atrás do calendário</div></div>
+      <div class="card"><h2>Acerto em questões</h2><div class="big">${c.acerto === null ? '—' : Math.round(c.acerto * 100) + '%'}</div><div class="muted">${c.questoes ? c.questoes + ' questões registradas' : 'nenhuma bateria ainda'}</div></div>
+      <div class="card"><h2>Páginas lidas</h2><div class="big">${c.paginas}</div><div class="muted">de ${c.paginasTotal} nas apostilas</div></div>
+    </section>
+    <section class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Para estudar agora</h2><button class="small ghost" onclick="ir('planejamento')">Ver a semana</button></div>
+      <p class="muted">A fila segue a ordem do ciclo. Se atrasar, continue de onde parou: o calendário é referência, não cobrança.</p>
+      ${prox.length ? prox.map(l => linSessao(l, true)).join('') : '<p class="muted">Toda a teoria está concluída. Siga a aba Simulados e fases.</p>'}
+      ${dsem(h) === 0 ? '<p class="muted">Domingo: descanso. Se quiser, 20 minutos de caderno de erros.</p>' : ''}</section>
+    ${agenda.length ? `<section class="card"><h2>Agenda do dia</h2>${agenda.map(a => `<div class="tcard" style="margin-bottom:6px"><input type="checkbox" ${d.tarefas[a.chave] ? 'checked' : ''} aria-label="Tarefa feita" onchange="marcarTarefa('${a.chave}', this.checked)"><span>${esc(a.t)}</span></div>`).join('')}</section>` : ''}
+    <section class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Revisões de hoje</h2>${rev.length ? `<button class="small" onclick="revAba='${rev.some(x => x.r.data < h) ? 'atrasadas' : 'hoje'}';ir('revisoes')">Revisar agora</button>` : ''}</div>
+      ${rev.length ? rev.slice(0, 4).map(x => linRevisao(x, h)).join('') + (rev.length > 4 ? `<p class="muted">E mais ${rev.length - 4} na aba Revisões.</p>` : '') : '<p class="muted">Nada para revisar hoje. Ao concluir uma sessão, as revisões de 24 h, 7 e 30 dias são agendadas sozinhas.</p>'}</section>
+    <section class="card"><h2>Calendário do plano</h2><div class="grid">
+      <div><div class="muted">Fim da teoria</div><b>${fmt(c.fimTeoria)}</b></div><div><div class="muted">Início da revisão</div><b>${fmt(c.ini2)}</b></div>
+      <div><div class="muted">Fim do plano</div><b>${fmt(c.fimPlano)}</b></div><div><div class="muted">${esc(p.alvoRotulo)}</div><b>${fmt(c.alvo)}</b>${c.alvo ? `<div class="muted">${c.diasAlvo >= 0 ? 'faltam ' + c.diasAlvo + ' dias' : 'já passou'}</div>` : ''}</div></div>
+      <p class="${c.alvo && c.folga < 0 ? 'neg' : 'muted'}" style="margin-top:10px">${esc(aviso)}</p></section>`;
+  },
+  planejamento() {
+    const p = P(), d = D(), c = calc(), h = hoje();
+    if (!verSemana) { const ini = seg(c.ini), fim = seg(c.fimPlano); let s = seg(h); if (s < ini) s = ini; if (s > fim) s = fim; verSemana = s; verMes = s.slice(0, 7); }
+    const dias = Array.from({ length: 7 }, (_, i) => addD(verSemana, i));
+    const daSemana = c.linhas.filter(l => l.data >= dias[0] && l.data <= dias[6]);
+    const feitas = daSemana.filter(l => l.feita).length;
+    const revDia = dia => c.linhas.reduce((a, l) => a + l.revs.filter(r => l.feita && !r.feito && r.data === dia).length, 0);
+    const colunas = dias.map(dia => {
+      const ls = daSemana.filter(l => l.data === dia);
+      const sab = c.semanas.find(w => w.sabado === dia && w.fase !== '—'), d2 = c.dias2.find(x => x.data === dia), d3 = c.dias3.find(x => x.data === dia);
+      const tarefas = [];
+      if (sab) { tarefas.push(['sab-' + sab.n, sab.tarefa]); if (sab.tema) tarefas.push(['esc-sab-' + sab.n, `${p.escrita.nome}: ${sab.tema}`]); }
+      if (d2) tarefas.push(['f2-' + d2.i, `Revisão: ${nomeDisc(p, d2.a)} + ${nomeDisc(p, d2.b)} e 40 questões`]);
+      if (d3) tarefas.push(['f3-' + d3.j, d3.t]);
+      const nr = dia <= h ? 0 : revDia(dia), min = ls.length * MIN_SESSAO;
+      return `<div class="dia ${dia === h ? 'hoje' : ''}"><div class="cab"><b>${DIAS[dsem(dia)][0].toUpperCase() + DIAS[dsem(dia)].slice(1)}, ${Number(dia.slice(8))}</b><span>${min ? dur(min) : '—'}</span></div>
+        ${ls.map(dcard).join('')}
+        ${tarefas.map(([k, t]) => `<label class="tcard"><input type="checkbox" ${d.tarefas[k] ? 'checked' : ''} onchange="marcarTarefa('${k}', this.checked)"><span>${esc(t)}</span></label>`).join('')}
+        ${nr ? `<button type="button" class="tcard" style="cursor:pointer;width:100%;color:var(--warn);font-weight:600" onclick="revAba='programadas';ir('revisoes')">${nr} ${nr > 1 ? 'revisões' : 'revisão'}</button>` : ''}
+        ${!ls.length && !tarefas.length && !nr ? `<div class="vazio">${dsem(dia) === 0 ? 'Descanso' : 'Livre'}</div>` : ''}</div>`;
+    }).join('');
+    // mini calendário do mês
+    const [y, mo] = verMes.split('-').map(Number), prim = `${verMes}-01`, ini = addD(prim, -seg0(prim));
+    const comSessao = new Set(c.linhas.map(l => l.data));
+    const cal = Array.from({ length: 42 }, (_, i) => addD(ini, i)).filter((x, i) => i < 35 || x.slice(0, 7) === verMes);
+    const distr = p.disciplinas.map(x => ({ x, n: daSemana.filter(l => l.s.d === x.k).length })).filter(o => o.n);
+    return `${titulo('Planejamento', 'As sessões aparecem na data prevista pelo ritmo. Toque num cartão para ver o conteúdo, concluir e marcar revisões.')}
+    <div class="plan">
+      <section class="card">
+        <div class="semnav"><button class="redondo" aria-label="Semana anterior" onclick="passoSemana(-1)">‹</button>
+          <div><div class="mes">${MESES_LONGOS[Number(verSemana.slice(5, 7)) - 1]}, ${verSemana.slice(0, 4)}</div><div class="faixa">${fmtC(dias[0])} – ${fmtC(dias[6])} · semana ${Math.floor(diffD(c.seg, verSemana) / 7) + 1} do plano</div></div>
+          <button class="redondo" aria-label="Próxima semana" onclick="passoSemana(1)">›</button>
+          <span class="row" style="gap:6px">${anel(daSemana.length ? feitas / daSemana.length : 0)}<span><b>${pct(feitas, daSemana.length)}%</b> <span class="muted">da semana · ${feitas}/${daSemana.length} sessões</span></span></span>
+          <button class="small ghost" style="margin-left:auto" onclick="irSemana(hoje())">Hoje</button></div>
+        <div class="semana-wrap"><div class="semana-grid">${colunas}</div></div>
+      </section>
+      <div style="display:grid;gap:16px">
+        <section class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b>${MESES_LONGOS[mo - 1]} ${y}</b><span class="row" style="gap:4px"><button class="small icone" aria-label="Mês anterior" onclick="passoMes(-1)">‹</button><button class="small icone" aria-label="Próximo mês" onclick="passoMes(1)">›</button></span></div>
+          <div class="cal">${['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map(x => `<span class="h">${x}</span>`).join('')}${cal.map(x => `<button type="button" class="${x.slice(0, 7) !== verMes ? 'fora' : ''} ${x === h ? 'hj' : x >= verSemana && x <= dias[6] ? 'sem' : ''}" onclick="irSemana('${x}')" aria-label="${fmt(x)}">${Number(x.slice(8))}${comSessao.has(x) && x !== h ? '<i></i>' : ''}</button>`).join('')}</div></section>
+        <section class="card"><h2>Distribuição da semana</h2>${distr.length ? `<div class="distr">${distr.map(o => `<div><span class="dot" style="--h:${hue(o.x.k)}"></span>${esc(o.x.nome)}<b>${dur(o.n * MIN_SESSAO)}</b></div>`).join('')}<div style="border-top:1px solid var(--line);padding-top:7px"><span>Total</span><b>${dur(daSemana.length * MIN_SESSAO)}</b></div></div>` : '<p class="muted">Sem sessões de teoria nesta semana.</p>'}
+          <p class="muted">Cada sessão vale cerca de ${dur(MIN_SESSAO)}, mais as questões.</p></section>
+      </div>
+    </div>`;
+  },
+  revisoes() {
+    const p = P(), c = calc(), h = hoje();
+    const todas = [];
+    c.linhas.forEach(l => { if (l.feita) l.revs.forEach((r, k) => todas.push({ l, r, k })); });
+    const grupos = {
+      hoje: todas.filter(x => !x.r.feito && x.r.data === h),
+      atrasadas: todas.filter(x => !x.r.feito && x.r.data < h),
+      programadas: todas.filter(x => !x.r.feito && x.r.data > h),
+      concluidas: todas.filter(x => x.r.feito),
+    };
+    const ord = (a, b) => (a.r.data < b.r.data ? -1 : a.r.data > b.r.data ? 1 : 0);
+    const lista = grupos[revAba] ? grupos[revAba].slice().sort(revAba === 'concluidas' ? (a, b) => -ord(a, b) : ord) : [];
+    const nomes = [['hoje', 'Hoje'], ['atrasadas', 'Atrasadas'], ['programadas', 'Programadas'], ['concluidas', 'Concluídas']];
+    return `${titulo('Revisões', 'Cada sessão concluída gera revisões em 24 horas, 7 dias e 30 dias.')}
+    <section class="card"><div class="subabas" role="tablist">${nomes.map(([k, t]) => `<button role="tab" aria-selected="${revAba === k}" class="${revAba === k ? 'on' : ''}" onclick="revAba='${k}';render()">${t}<span>${grupos[k].length}</span></button>`).join('')}</div>
+      <div style="margin-top:6px">${lista.length ? lista.slice(0, 200).map(x => linRevisao(x, h)).join('') + (lista.length > 200 ? `<p class="muted">Mostrando 200 de ${lista.length}.</p>` : '')
+        : `<p class="muted" style="padding:14px 0">${{ hoje: 'Nada para revisar hoje.', atrasadas: 'Nenhuma revisão atrasada.', programadas: 'Nenhuma revisão agendada. Conclua uma sessão para agendar as revisões.', concluidas: 'Nenhuma revisão feita ainda.' }[revAba]}</p>`}</div></section>
+    <section class="card"><h2>Como revisar</h2><ul class="lista">${REVS.map(([n, t, m]) => `<li><b>${t} · ${m}.</b> ${n === 1 ? 'Releia o resumo e refaça os erros.' : n === 7 ? 'Resumo e 5 questões novas do tema.' : 'Lei seca do tema e 10 questões.'}</li>`).join('')}</ul></section>`;
+  },
+  crono() {
+    const p = P(), c = calc(), h = hoje(), b = filtro.busca.trim().toLowerCase();
+    const passa = l => (!filtro.sit || (filtro.sit === 'Concluídas' ? !!l.feita : l.sit === filtro.sit)) && (!filtro.disc || l.s.d === filtro.disc)
+      && (!b || (l.s.id + ' ' + l.s.itens.map(i => i.t).join(' ')).toLowerCase().includes(b));
+    const filtrando = !!(filtro.sit || filtro.disc || b);
+    const visiveis = c.linhas.filter(passa);
+    const semAtual = (c.linhas.find(l => l.data >= addD(h, -seg0(h))) || c.linhas[c.linhas.length - 1]).semana;
+    const grupos = [];
+    visiveis.forEach(l => { const g = grupos[grupos.length - 1]; if (g && g.n === l.semana) g.ls.push(l); else grupos.push({ n: l.semana, ls: [l] }); });
+    const opcoes = ['', 'Pendente', 'Atrasada', 'Revisão vencida', 'Em dia', 'Ciclo completo', 'Concluídas'];
+    return `${titulo('Cronograma', `${c.total} sessões na ordem do ciclo. Marque a data em "Concluída em" ao terminar.`)}
+    <section class="card"><div class="filtros">
+        <label>Situação <select id="f-sit" onchange="filtro.sit=this.value;render()">${opcoes.map(o => `<option value="${o}" ${filtro.sit === o ? 'selected' : ''}>${o || 'Todas'}</option>`).join('')}</select></label>
+        <label>Disciplina <select id="f-disc" onchange="filtro.disc=this.value;render()"><option value="">Todas</option>${p.disciplinas.map(x => `<option value="${x.k}" ${filtro.disc === x.k ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select></label>
+        <label>Buscar <input id="f-busca" value="${esc(filtro.busca)}" placeholder="código ou tema" oninput="filtro.busca=this.value;agendarFiltro()"></label></div>
+      ${filtrando ? `<p class="muted">${visiveis.length} sessões no filtro.</p>` : ''}</section>
+    ${grupos.map(g => {
+      const ls = g.ls, feitas = ls.filter(l => l.feita).length, ini = addD(c.seg, 7 * (g.n - 1));
+      return `<details class="semana ${g.n === semAtual ? 'atual' : ''}" ${filtrando || g.n === semAtual ? 'open' : ''}>
+        <summary><b>Semana ${g.n}</b><span class="muted">${fmtC(ini)} – ${fmtC(addD(ini, 6))}</span><span class="prog"><span class="bar"><div style="width:${pct(feitas, ls.length)}%"></div></span><span class="muted">${feitas}/${ls.length}</span></span></summary>
+        <div class="corpo">${ls.map(l => `<div class="lin" style="--h:${hue(l.s.d)}"><span class="ic">${esc(l.s.d)}</span>
+          <div><div class="tt">${esc(l.s.itens[0].t)}${l.s.itens.length > 1 ? ` <span class="muted">+${l.s.itens.length - 1}</span>` : ''}</div>
+            <div class="row"><span class="ds">${esc(nomeDisc(p, l.s.d))}</span><span class="muted">${l.s.id} · ${DIAS[dsem(l.data)]} ${fmtC(l.data)}${l.s.p ? ' · ' + l.s.p + ' p.' : ''}</span><span class="chip ${sitClasse(l.sit)}">${l.sit}</span></div></div>
+          <div class="ctl"><label style="display:flex;gap:6px;align-items:center">Concluída em <input type="date" id="cd-${l.s.id}" value="${l.feita}" onchange="concluir('${l.s.id}', this.value)"></label>
+            <span class="revs">${l.revs.map(r => `<button type="button" class="${r.feito ? 'on' : ''}" ${l.feita ? '' : 'disabled'} title="Revisão de ${REVS.find(x => x[0] === r.n)[1]}${r.data ? ' em ' + fmtC(r.data) : ''}" onclick="marcarRev('${l.s.id}', ${r.n})">${r.n === 1 ? '24h' : r.n + 'd'}</button>`).join('')}</span></div></div>`).join('')}</div></details>`;
+    }).join('') || '<section class="card"><p class="muted">Nenhuma sessão nesse filtro.</p></section>'}`;
+  },
+  disciplinas() {
+    const p = P(), c = calc();
+    return `${titulo('Disciplinas', esc(p.fonte))}
+    <div class="discs">${c.porDisc.map(x => `<section class="card disc" style="--h:${hue(x.k)}">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">${esc(x.nome)}</h3><span class="chip ${acertoClasse(x.acerto)}">${acertoTexto(x.acerto)}</span></div>
+      <div class="muted">${esc(p.grupos[x.grupo] || '')}</div>
+      <div class="row" style="margin:10px 0 4px"><div class="bar" style="flex:1"><div style="width:${pct(x.feitas, x.sessoes)}%;background:hsl(var(--h) 55% 50%)"></div></div><span class="muted">${x.feitas}/${x.sessoes}</span></div>
+      <div class="row muted"><span>${x.aulas.length} aulas · ${x.aulas.reduce((a, l) => a + l.p, 0)} p.</span><span>${x.q ? `${x.q} questões · ${Math.round(x.acerto * 100)}% de acerto` : 'sem questões registradas'}</span></div>
+      <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Aulas e cadernos</summary><ol class="passos" style="margin-top:8px">${x.aulas.map(l => `<li>${esc(l.t)} <span class="muted">· ${l.p} p.</span><br><code>${esc(l.path)}</code></li>`).join('')}${x.externos.map(t => `<li>${esc(t)} <span class="chip">material externo</span></li>`).join('')}</ol>
+        ${x.cadernos.length ? `<p class="muted">Questões: ${x.cadernos.map(q => `<code>Questões/${esc(q)}.pdf</code>`).join(', ')}</p>` : ''}</details></section>`).join('')}</div>
+    <section class="card"><h2>Lacunas e avisos</h2><ul class="lista">${p.lacunas.map(g => `<li>${esc(g)}</li>`).join('')}</ul></section>
+    <section class="card"><h2>Material da pasta que não entra neste plano</h2><ul class="lista">${p.fora.map(([a, b]) => `<li><b>${esc(a)}:</b> ${esc(b)}</li>`).join('')}</ul>
+      <p class="muted">Os caminhos são relativos à pasta Ceisc no seu computador. O app guarda só os títulos, nunca os PDFs.</p></section>`;
+  },
+  semanas() {
+    const p = P(), d = D(), c = calc(), h = hoje();
+    const ck = k => `<input type="checkbox" ${d.tarefas[k] ? 'checked' : ''} aria-label="Feito" onchange="marcarTarefa('${k}', this.checked)">`;
+    return `${titulo('Simulados e fases', `${c.semTeoria} semanas de teoria, depois 3 de revisão e 1 de ${esc(p.fase3.toLowerCase())}. As fases se ajustam ao ritmo e à data de início.`)}
+    <section class="card"><h2>Sábados</h2><div class="scroll"><table><thead><tr><th>Sem.</th><th>Sábado</th><th>Fase</th><th>Tarefa</th><th>${esc(p.escrita.nome)}</th><th>Feito</th><th>Nota simulado</th></tr></thead><tbody>
+      ${c.semanas.map(w => `<tr style="${w.fase === '—' ? 'opacity:.55' : ''}${w.sabado >= h && diffD(h, w.sabado) < 7 ? ';background:var(--accent-soft)' : ''}"><td class="num">${w.n}</td><td>${fmtC(w.sabado)}</td><td><span class="chip ${w.fase === 'Teoria' ? 'acc' : w.fase === 'Revisão' ? 'warn' : ''}">${esc(w.fase)}</span></td>
+        <td>${esc(w.tarefa)}</td><td>${esc(w.tema)}</td><td>${w.fase === '—' ? '' : ck('sab-' + w.n)}</td>
+        <td>${w.fase === 'Revisão' ? `<input type="number" id="nota-sim-${w.n}" min="0" max="200" value="${d.notas['sim-' + w.n] ?? ''}" style="width:80px" onchange="definirNota('sim-${w.n}', this.value)">` : ''}</td></tr>`).join('')}
+    </tbody></table></div></section>
+    <section class="card"><h2>Fase 2 · revisão por disciplina</h2><div class="scroll"><table><thead><tr><th>Dia</th><th>Data</th><th>Revisar</th><th>Questões</th><th>Feito</th></tr></thead><tbody>
+      ${c.dias2.map(x => `<tr><td class="num">${x.i + 1}</td><td>${DIAS[dsem(x.data)]} ${fmtC(x.data)}</td><td>${esc(nomeDisc(p, x.a))} + ${esc(nomeDisc(p, x.b))}<div class="muted">Resumos, caderno de erros e lei seca (2 h 30)</div></td><td>40 questões, 20 de cada</td><td>${ck('f2-' + x.i)}</td></tr>`).join('')}
+    </tbody></table></div></section>
+    <section class="card"><h2>Fase 3 · ${esc(p.fase3)}</h2><div class="scroll"><table><thead><tr><th>Dia</th><th>Data</th><th>Tarefa</th><th>Feito</th></tr></thead><tbody>
+      ${c.dias3.map(x => `<tr><td class="num">${x.j + 1}</td><td>${DIAS[dsem(x.data)]} ${fmtC(x.data)}</td><td>${esc(x.t)}</td><td>${ck('f3-' + x.j)}</td></tr>`).join('')}
+    </tbody></table></div></section>`;
+  },
+  questoes() {
+    const p = P(), d = D(), c = calc();
+    const hist = d.questoes.slice().sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
+    return `${titulo('Questões', 'Registre cada bateria. A meta é 80% de acerto por disciplina antes da Fase 2.')}
+    <section class="card"><h2>Registrar bateria</h2>
+      <form class="fields" onsubmit="addQuestoes(event)">
+        <label>Disciplina <select name="q_disc">${p.disciplinas.map(x => `<option value="${x.k}">${esc(x.nome)}</option>`).join('')}</select></label>
+        <label>Data <input type="date" name="q_data" value="${hoje()}"></label>
+        <label>Questões <input type="number" name="q_n" min="1" max="500" value="15" inputmode="numeric"></label>
+        <label>Acertos <input type="number" name="q_ok" min="0" max="500" inputmode="numeric" required></label>
+        <label style="grid-column:1/-1">Temas que errou (caderno de erros) <input name="q_temas" placeholder="ex.: prescrição intercorrente; crase antes de horas"></label>
+        <label>Caderno ou banca <input name="q_cad" placeholder="ex.: FCC 2024"></label>
+        <button>Registrar</button>
+      </form><p class="muted" id="qMsg"></p></section>
+    <section class="card"><h2>Acerto por disciplina</h2>
+      ${c.porDisc.map(x => { const a = x.acerto; const cor = a === null ? 'var(--line)' : a >= 0.8 ? 'var(--good)' : a >= 0.65 ? 'var(--warn)' : 'var(--bad)';
+        return `<div class="acc-linha" style="--h:${hue(x.k)}"><span class="row" style="gap:6px"><span class="dot"></span>${esc(x.nome)} <span class="muted">${x.q ? x.q + ' q' : ''}</span></span><span class="trk"><i style="width:${a === null ? 0 : Math.round(a * 100)}%;background:${cor}"></i><b title="meta de 80%"></b></span><span class="num" style="text-align:right">${a === null ? '—' : Math.round(a * 100) + '%'}</span></div>`; }).join('')}
+      <p class="muted">A linha marca 80%. Verde a partir de 80%, âmbar de 65% a 79%, vermelho abaixo de 65%.</p></section>
+    <section class="card"><h2>Histórico e caderno de erros</h2>
+      ${hist.length ? `<div class="scroll"><table><thead><tr><th>Data</th><th>Disciplina</th><th class="num">Acertos</th><th class="num">%</th><th>Temas que errou</th><th></th></tr></thead><tbody>
+        ${hist.map(q => `<tr><td>${fmtC(q.data)}</td><td><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="dot" style="--h:${hue(q.disc)}"></span>${esc(nomeDisc(p, q.disc))}</span></td><td class="num">${q.ok}/${q.n}</td><td class="num"><span class="chip ${acertoClasse(q.ok / q.n)}">${pct(q.ok, q.n)}%</span></td><td>${esc(q.temas)}${q.caderno ? `<div class="muted">${esc(q.caderno)}</div>` : ''}</td><td><button class="small ghost" onclick="delQuestao('${q.id}')">Apagar</button></td></tr>`).join('')}
+      </tbody></table></div>` : '<p class="muted">Nenhuma bateria ainda. Depois da primeira sessão, faça as questões indicadas e registre aqui.</p>'}</section>`;
+  },
+  escrita() {
+    const p = P(), d = D(), e = p.escrita;
+    const feitos = Object.values(d.escrita).filter(x => x.data).length;
+    const notas = Object.values(d.escrita).map(x => x.nota).filter(n => n !== '' && n !== undefined);
+    return `${titulo(e.nome, esc(e.descricao))}
+    <section class="card"><h2>Roteiro · ${esc(e.titulo)}</h2><ol class="passos">${e.roteiro.map(t => `<li>${esc(t.replace(/^\d+\.\s*/, ''))}</li>`).join('')}</ol>
+      <p class="muted" style="margin-top:10px">${feitos} de ${e.temas.length} treinados${notas.length ? ` · nota média ${(notas.reduce((a, n) => a + Number(n), 0) / notas.length).toFixed(1)}` : ''}. No calendário, um tema entra todo sábado a partir da semana 3.</p></section>
+    <section class="card"><h2>Temas</h2>${e.temas.map(([t, base, onde], i) => { const x = d.escrita[i] || {}; return `<div class="lin" style="--h:${HUES[i % HUES.length]}"><span class="ic">${i + 1}</span>
+      <div><div class="tt">${esc(t)}</div><div class="muted">${esc(base)}</div><div class="row" style="margin-top:4px"><span class="chip acc">${esc(onde)}</span>${x.data ? `<span class="chip ok">escrito em ${fmtC(x.data)}</span>` : ''}</div>
+        <label style="margin-top:6px">O que melhorar <input id="esc-obs-${i}" value="${esc(x.obs || '')}" onchange="setEscrita(${i}, 'obs', this.value)"></label></div>
+      <div class="ctl"><label>Escrito em <input type="date" id="esc-data-${i}" value="${x.data || ''}" onchange="setEscrita(${i}, 'data', this.value)"></label>
+        <label>Nota <input type="number" id="esc-nota-${i}" min="0" max="100" step="0.5" style="width:80px" value="${x.nota ?? ''}" onchange="setEscrita(${i}, 'nota', this.value)"></label></div></div>`; }).join('')}</section>`;
+  },
+  bussola() {
+    const p = P(), d = D(), ls = bussola(p, d), ano = anoPlano(p);
+    if (!p.bussola) return titulo('Bússola de carreira', 'Este plano não tem Bússola.');
+    return `${titulo('Bússola de carreira', 'Compare o seu acerto e o seu interesse em cada trilha. Em dezembro, a maior pontuação indica o alvo do ano seguinte.')}
+    <section class="card"><div class="scroll"><table><thead><tr><th>Trilha</th><th class="num">Acerto</th><th class="num">Interesse</th><th class="num">Pontuação</th><th class="num">Posição</th></tr></thead><tbody>
+      ${ls.map(l => `<tr><td><b>${esc(l.nome)}</b><div class="muted">${esc(l.carreiras)}</div><div class="muted">${l.keys.map(k => esc(nomeDisc(p, k))).join(', ')}</div></td>
+        <td class="num">${l.acerto === null ? '—' : Math.round(l.acerto * 100) + '%'}</td><td class="num">${l.interesse === null ? '—' : l.interesse.toFixed(1)}</td>
+        <td class="num"><b>${l.pontos === null ? '—' : l.pontos.toFixed(1)}</b></td><td class="num">${l.posicao ? `<span class="chip ${l.posicao === 1 ? 'ok' : ''}">${l.posicao}º</span>` : '—'}</td></tr>`).join('')}
+      </tbody></table></div><p class="muted">Pontuação = média entre o acerto (convertido para 0 a 5) e o interesse. O acerto vem das questões registradas nas disciplinas-chave.</p></section>
+    <section class="card"><h2>Interesse mensal (1 a 5)</h2><div class="scroll"><table><thead><tr><th>Mês</th>${p.bussola.map(b => `<th>${esc(b[0])}</th>`).join('')}<th>O que mais e menos gostei</th></tr></thead><tbody>
+      ${MESES.map((m, i) => { const k = `${ano}-${pad(i + 1)}`, x = d.interesse[k] || {}; return `<tr><td>${m}/${ano}</td>${p.bussola.map((_, t) => `<td><select id="int-${k}-${t}" aria-label="Interesse" onchange="setInteresse('${k}', 't${t}', this.value)" style="width:70px"><option value="">—</option>${[1, 2, 3, 4, 5].map(n => `<option ${x['t' + t] === n ? 'selected' : ''}>${n}</option>`).join('')}</select></td>`).join('')}
+        <td><input id="int-obs-${k}" value="${esc(x.obs || '')}" onchange="setInteresse('${k}', 'obs', this.value)" style="min-width:180px"></td></tr>`; }).join('')}
+    </tbody></table></div></section>
+    <section class="card"><h2>Perguntas para responder até dezembro</h2><ul class="lista">${p.bussolaPerguntas.map(q => `<li>${esc(q.replace(/^•\s*/, ''))}</li>`).join('')}</ul></section>`;
+  },
+  taf() {
+    const p = P(), d = D(), idx = tafIndices(p, d);
+    if (!p.taf) return titulo('Teste físico (TAF)', 'Este plano não tem TAF.');
+    const regs = d.taf.registros.slice().sort((a, b) => (a.data < b.data ? 1 : -1));
+    return `${titulo('Teste físico (TAF)', 'Registre os treinos a cada 2 semanas e acompanhe quantos testes já estão no índice.')}
+    <section class="card"><h2>Índices</h2>
+      <div class="row"><label style="max-width:160px">Sexo <select id="taf-sexo" onchange="setSexo(this.value)"><option value="M" ${d.taf.sexo !== 'F' ? 'selected' : ''}>Masculino</option><option value="F" ${d.taf.sexo === 'F' ? 'selected' : ''}>Feminino</option></select></label></div>
+      <div class="scroll"><table><thead><tr><th>Teste</th><th>Unidade</th><th class="num">Índice mínimo</th><th>Regra</th></tr></thead><tbody>
+      ${idx.map(t => `<tr><td>${esc(t.teste)}</td><td>${esc(t.un)}</td><td class="num">${t.editavel ? `<input type="number" step="any" id="taf-alvo-${t.i}" style="width:90px" value="${t.valor ?? ''}" onchange="setAlvoTaf('${t.i}${d.taf.sexo === 'F' ? 'F' : 'M'}', this.value)" aria-label="Índice do edital">` : t.valor}</td><td class="muted">${t.maior ? 'quanto maior, melhor' : 'quanto menor, melhor'}</td></tr>`).join('')}
+      </tbody></table></div>
+      <p class="muted">${idx.some(t => t.editavel) ? 'As marcas deste edital não foram confirmadas: digite os índices do edital nos campos acima. ' : ''}Tempos em segundos (11 min 30 s = 690).</p></section>
+    <section class="card"><h2>Registrar treino</h2><form class="fields" onsubmit="addTaf(event)">
+      <label>Data <input type="date" name="taf_data" value="${hoje()}"></label>
+      ${idx.map(t => `<label>${esc(t.teste.split(' (')[0])} (${esc(t.un)}) <input type="number" step="any" name="taf_${t.i}"></label>`).join('')}
+      <label style="grid-column:1/-1">Observações <input name="taf_obs"></label><button>Registrar</button></form><p class="muted" id="tafMsg"></p></section>
+    <section class="card"><h2>Treinos</h2>${regs.length ? `<div class="scroll"><table><thead><tr><th>Data</th>${idx.map(t => `<th class="num">${esc(t.teste.split(' (')[0])}</th>`).join('')}<th>No índice</th><th></th></tr></thead><tbody>
+      ${regs.map(r => `<tr><td>${fmtC(r.data)}</td>${idx.map((t, i) => { const x = r.v[i]; const ok = t.valor === null || x === '' ? null : (t.maior ? x >= t.valor : x <= t.valor);
+        return `<td class="num">${x === '' ? '—' : `<span class="chip ${ok === null ? '' : ok ? 'ok' : 'bad'}">${x}</span>`}</td>`; }).join('')}<td><b>${tafNoIndice(idx, r.v)} de ${idx.length}</b>${r.obs ? `<div class="muted">${esc(r.obs)}</div>` : ''}</td><td><button class="small ghost" onclick="delTaf('${r.id}')">Apagar</button></td></tr>`).join('')}
+      </tbody></table></div>` : '<p class="muted">Nenhum treino registrado.</p>'}
+      <p class="muted">Rotina sugerida: corrida e abdominal 3 vezes por semana, barra e saltos 2 vezes, natação no fim de semana. Faça avaliação médica e procure um educador físico antes de aumentar a carga.</p></section>`;
+  },
+  metodo() {
+    const p = P();
+    const banca = {
+      'FCC': ['Prova objetiva com Gerais (peso 1) e Específicos (peso 2). Dê 2 de cada 3 sessões às disciplinas jurídicas.', 'A FCC é literal: cobra o texto da CLT, da CF, do CPC e das súmulas do TST. Depois de cada aula, leia os artigos citados.', 'O estudo de caso tem 15 a 30 linhas. Treine com o relógio: 3 minutos por questão e 50 minutos por caso.'],
+      'Instituto AOCP': ['O Instituto AOCP cobra muito texto de lei e conceito direto. Depois de cada aula, leia os artigos citados.', 'Múltipla escolha com 5 alternativas: treine eliminando alternativas e desconfie de "sempre", "nunca" e prazos trocados.', 'A redação elimina: escreva uma por semana desde cedo e peça correção quando puder.'],
+      'Cebraspe': ['No edital PC-PE 2026 a prova é de múltipla escolha (A a E), sem desconto por erro: responda todas as questões.', 'O Cebraspe adora exceções e jurisprudência do STF e do STJ. Leia os informativos citados nas aulas de Penal e Processo Penal.', 'Treine também itens de certo ou errado: o Cebraspe usa esse formato em outros concursos e ele força leitura precisa.'],
+      'Multibanca': ['FCC (tribunais): muito texto de lei e súmula, literal. Leia a lei seca depois de cada aula.', 'Cebraspe (polícias e tribunais): exceções, jurisprudência e, em muitos concursos, certo ou errado com desconto por erro.', 'FGV e Instituto AOCP: enunciados longos, casos práticos e interpretação. Treine leitura rápida e eliminação de alternativas.', 'Varie as bancas nas baterias de questões: depois de escolher a carreira, especialize-se na banca dela.'],
+    }[p.banca] || [];
+    return `${titulo('Método', 'Rotina diária, revisão espaçada e como a banca cobra.')}
+    <section class="card"><h2>Rotina de um dia útil</h2><ol class="passos">
+      <li><b>Revisões do dia (20 a 30 min).</b> Comece pela aba Revisões. Releia marcações e resumo, e refaça 5 questões do tema.</li>
+      <li><b>Sessão 1 (cerca de 1 h 20).</b> Leitura ativa da apostila: grife pouco e anote o artigo de lei ao lado de cada regra. Feche com um resumo de 5 a 10 linhas.</li>
+      <li><b>Sessão 2 (cerca de 1 h 20).</b> Mesma técnica, em outra disciplina. No ritmo 3 entra uma terceira sessão.</li>
+      <li><b>Questões (40 min).</b> As questões indicadas em cada sessão. Registre na aba Questões e passe os erros para o caderno de erros.</li>
+      <li><b>Sessões externas.</b> Sem apostila na pasta: estude pela lei seca ou por material próprio e faça questões da banca sobre o tema.</li></ol></section>
+    <section class="card"><h2>Como a banca cobra · ${esc(p.banca)}</h2><ul class="lista">${banca.map(t => `<li>${esc(t)}</li>`).join('')}</ul></section>
+    <section class="card"><h2>Caderno de erros</h2><ul class="lista"><li>Uma linha por erro: disciplina, tema, a regra certa e o artigo ou súmula.</li><li>Separe erro por desconhecimento de erro por pegadinha (prazo, exceção, "salvo", "exclusivamente").</li><li>Releia o caderno inteiro todo sábado e nas semanas de revisão.</li></ul></section>`;
+  },
+  ajustes() {
+    const p = P(), d = D();
+    let tema = ''; try { tema = localStorage.getItem('est-tema') || ''; } catch (e) {}
+    return `${titulo('Ajustes', 'Plano ativo, calendário, importação da planilha, backup e sincronização.')}
+    <section class="card"><h2>Plano ativo</h2><div class="planos">${PLANOS.map(x => { const c = calc(x, D(x)); return `<label class="${x.id === p.id ? 'on' : ''}"><input type="radio" name="plano" ${x.id === p.id ? 'checked' : ''} onchange="trocarPlano('${x.id}')"><span><b>${esc(x.nome)}</b><br><span class="muted">${x.sessoes.length} sessões · ${esc(x.banca)} · ${c.feitas} concluídas</span></span></label>`; }).join('')}</div>
+      <p class="muted">Cada plano guarda o próprio progresso. Trocar de plano não apaga nada.</p></section>
+    <section class="card"><h2>Calendário de ${esc(p.nome)}</h2><div class="filtros">
+      <label>Data de início (segunda-feira) <input type="date" id="cfg-inicio" value="${esc(d.cfg.inicio)}" onchange="setCfg('inicio', this.value)"></label>
+      <label>Sessões por dia útil <select id="cfg-ritmo" onchange="setCfg('ritmo', this.value)"><option value="2" ${Number(d.cfg.ritmo) !== 3 ? 'selected' : ''}>2 · cerca de 4 h</option><option value="3" ${Number(d.cfg.ritmo) === 3 ? 'selected' : ''}>3 · intensivo, 5 h 30</option></select></label>
+      <label>${esc(p.alvoRotulo)} <input type="date" id="cfg-alvo" value="${esc(d.cfg.alvo || '')}" onchange="setCfg('alvo', this.value)"></label></div>
+      <p class="muted">O cronograma usa só dias úteis e não desconta feriados.</p></section>
+    <section class="card"><h2>Importar progresso da planilha</h2><p>Escolha a planilha .xlsm ou .xlsx do plano. O app reconhece o plano pelo título e traz sessões concluídas, revisões, questões, textos, Bússola, TAF e tarefas de sábado.</p>
+      <div class="row"><button onclick="$('fx').click()">Escolher planilha</button></div><p class="muted" id="impStatus">${esc(impMsg)}</p></section>
+    <section class="card"><h2>Backup</h2><div class="row"><button onclick="exportar()">Baixar backup .json</button><button class="ghost" onclick="$('fj').click()">Restaurar backup</button><button class="danger" onclick="zerarPlano()">Apagar progresso deste plano</button></div>
+      <p class="muted">${S.ultimoBackup ? 'Último backup: ' + fmt(S.ultimoBackup) + '.' : 'Nenhum backup baixado ainda.'} Os dados ficam neste aparelho; para usar em outro, sincronize pelo Google Drive.</p></section>
+    ${blocoSync()}
+    <section class="card"><h2>Aparência</h2><div class="row">${[['', 'Automático'], ['light', 'Claro'], ['dark', 'Escuro']].map(([v, t]) => `<button class="${tema === v ? '' : 'ghost'}" onclick="setTema('${v}')">${t}</button>`).join('')}</div></section>`;
+  },
+};
+function linRevisao({ l, r }, h) {
+  const s = l.s, p = P(), tipo = REVS.find(x => x[0] === r.n);
+  return `<div class="lin" style="--h:${hue(s.d)}"><span class="ic">${esc(s.d)}</span>
+    <div><div class="tt">${esc(s.itens[0].t)}</div><div class="row"><span class="ds">${esc(nomeDisc(p, s.d))}</span><span class="muted">Estudado em ${fmtC(l.feita)}</span>
+      <span class="chip tag ${r.feito ? 'ok' : r.data < h ? 'bad' : r.data === h ? 'warn' : ''}">Revisão de ${tipo[1].replace('24 h', '1 dia')}</span><span class="muted">${r.feito ? 'feita' : (r.data < h ? 'era para ' : 'para ') + fmtC(r.data)} · ${tipo[2]}</span></div></div>
+    <div class="ctl">${r.feito ? `<button class="small ghost" onclick="marcarRev('${s.id}', ${r.n})">Desfazer</button>` : `<button class="small" onclick="marcarRev('${s.id}', ${r.n})">Revisar agora</button>`}</div></div>`;
+}
+
+function render() {
+  if (!ABAS().some(([k]) => k === aba && k !== '-')) aba = 'inicio';
+  const p = P(), c = calc(), vencidas = revisoesDevidas(c).length;
+  const nomeAba = (ABAS().find(([k]) => k === aba) || [, ''])[1];
+  document.title = `${nomeAba} · Plano de Estudos`;
+  $('side').innerHTML = `<div class="marca"><img src="icon-192.png" alt="">Plano de Estudos</div>
+    <button class="plano-atual" onclick="ir('ajustes')" title="Trocar plano"><span><b>${esc(p.nome)}</b><span>${pct(c.feitas, c.total)}% concluído · trocar</span></span></button>
+    ${ABAS().map(([k, t]) => (k === '-' ? `<div class="sec">${esc(t)}</div>` : `<button class="nav ${k === aba ? 'on' : ''}" onclick="ir('${k}')" ${k === aba ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k]}</svg>${esc(t)}${k === 'revisoes' && vencidas ? `<span class="qtd">${vencidas}</span>` : ''}</button>`)).join('')}`;
+  $('topoTitulo').textContent = nomeAba;
+  $('topoPlano').textContent = p.nome;
+  $('aviso').innerHTML = avisoSync() + (falhaSalvar ? '<div class="aviso"><span>O navegador não deixou salvar os dados. Baixe um backup .json para não perder o progresso.</span><button class="small" onclick="exportar()">Baixar backup</button></div>' : '');
+  const foco = document.activeElement && document.activeElement.id, posY = window.scrollY;
+  const abertos = [...$('conteudo').querySelectorAll('details')].map(x => x.open);
+  const mesmaAba = aba === abaRenderizada;
+  $('conteudo').innerHTML = V[aba]();
+  if (mesmaAba) {
+    [...$('conteudo').querySelectorAll('details')].forEach((x, i) => { if (abertos[i] !== undefined) x.open = abertos[i]; });
+    window.scrollTo(0, posY);
+  }
+  abaRenderizada = aba;
+  if (modalId) desenharModal(); else $('modal').hidden = true;
+  if (foco && $(foco) && ($('conteudo').contains($(foco)) || $('modal').contains($(foco)))) { const el = $(foco); el.focus({ preventScroll: true }); if (el.tagName === 'INPUT' && el.type === 'text') { try { el.setSelectionRange(el.value.length, el.value.length); } catch (e) {} } }
+}
+let abaRenderizada = null, filtroTimer = null;
+function agendarFiltro() { clearTimeout(filtroTimer); filtroTimer = setTimeout(render, 250); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && modalId) fecharModal(); });
+
+/* ---------- sincronização com o Google Drive (pasta privada do app, dados cifrados) ----------
+   Mesmo mecanismo do Controle Financeiro: OAuth implícito, escopo drive.appdata, AES-GCM com PBKDF2 e mesclagem em três vias. */
+const SYNC_KEY = 'est-sync', SYNC_ARQ = 'plano-de-estudos.enc';
+const SYNC_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const ssGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const ssSet = (k, v) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} };
+let syncCfg = lsGet(SYNC_KEY, {});
+let syncEstado = '';
+let envioAgendado = null, sincronizando = false, pendente = false, novaTentativa = null;
+const setSync = t => { syncEstado = t; const el = $('syncstatus'); if (el) el.textContent = t; };
+const tokenValido = () => !!ssGet('est-token') && Date.now() < Number(ssGet('est-exp') || 0);
+const redirectUri = () => location.origin + location.pathname;
+const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function chaveDe(senha, salt) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(senha), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 310000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function cifrar(obj, senha) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await chaveDe(senha, salt), new TextEncoder().encode(JSON.stringify(obj)));
+  return JSON.stringify({ v: 1, salt: b64(salt), iv: b64(iv), data: b64(new Uint8Array(ct)) });
+}
+async function decifrar(texto, senha) {
+  const p = JSON.parse(texto);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(p.iv) }, await chaveDe(senha, unb64(p.salt)), unb64(p.data));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function conectarDrive() {
+  const id = (syncCfg.clientId || '').trim();
+  if (!id) return setSync('Salve o Client ID do Google Cloud primeiro.');
+  const senha = $('sync-senha').value;
+  if (senha.length < 6) return setSync('A senha de sincronização precisa ter pelo menos 6 caracteres.');
+  ssSet('est-senha', senha);
+  if (tokenValido()) return sincronizar();
+  irAoGoogle(false);
+}
+let renovacaoFalhou = false;
+function irAoGoogle(silencioso) {
+  const id = (syncCfg.clientId || '').trim();
+  if (!id) return;
+  lsSet('est-renovacao', Date.now());
+  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+    client_id: id, redirect_uri: redirectUri(), response_type: 'token', scope: SYNC_SCOPE, include_granted_scopes: 'true', ...(silencioso ? { prompt: 'none' } : {})
+  });
+}
+const syncPronto = () => !!(syncCfg.clientId && ssGet('est-senha'));
+const digitando = () => { const el = document.activeElement; return !!el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName); };
+function renovarSePreciso() {
+  if (!syncPronto() || tokenValido() || renovacaoFalhou || !navigator.onLine || document.hidden || digitando()) return false;
+  if (Date.now() - Number(lsGet('est-renovacao', 0)) < 120000) return false;
+  irAoGoogle(true);
+  return true;
+}
+function lerRetornoOAuth() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  const t = p.get('access_token'), erro = p.get('error');
+  if (!t && !erro) return;
+  if (t) { ssSet('est-token', t); ssSet('est-exp', String(Date.now() + (Number(p.get('expires_in')) || 3600) * 1000 - 60000)); lsSet('est-renovacao', 0); }
+  else renovacaoFalhou = true;
+  history.replaceState(null, '', location.pathname + location.search);
+}
+function avisoSync() {
+  if (!syncPronto()) return '';
+  if (!tokenValido()) return `<div class="aviso"><span>Sincronização pausada: o acesso do Google precisa ser renovado. O progresso fica salvo neste aparelho e vai para o Drive ao reconectar.</span><button class="small" onclick="irAoGoogle(false)">Reconectar</button></div>`;
+  if (syncEstado.startsWith('Não sincronizou')) return `<div class="aviso"><span>${esc(syncEstado)}. O app tenta de novo sozinho.</span><button class="small" onclick="sincronizar()">Tentar agora</button></div>`;
+  return '';
+}
+function desconectarDrive() {
+  ssSet('est-token', null); ssSet('est-exp', null); ssSet('est-senha', null);
+  renovacaoFalhou = false; clearTimeout(envioAgendado);
+  setSync('Desconectado. O progresso continua salvo neste aparelho.');
+  render();
+}
+function salvarClientId(e) { e.preventDefault(); syncCfg.clientId = $('sync-cid').value.trim(); lsSet(SYNC_KEY, syncCfg); setSync('Client ID salvo.'); render(); }
+async function drive(url, opts = {}) {
+  if (!tokenValido()) throw new Error('sessão do Google expirou; conecte de novo');
+  const r = await fetch(url, { ...opts, headers: { Authorization: 'Bearer ' + ssGet('est-token'), ...(opts.headers || {}) } });
+  if (r.status === 401) { ssSet('est-token', null); ssSet('est-exp', null); throw new Error('sessão do Google expirou; conecte de novo'); }
+  if (!r.ok) throw new Error('o Drive respondeu ' + r.status);
+  return r;
+}
+async function acharArquivo() {
+  const q = encodeURIComponent(`name='${SYNC_ARQ}' and trashed=false`);
+  const j = await (await drive(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id)`)).json();
+  return j.files[0] ? j.files[0].id : null;
+}
+async function gravarArquivo(texto, id, nome = SYNC_ARQ) {
+  if (id) return (await drive(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media&fields=id`, { method: 'PATCH', headers: { 'Content-Type': 'application/octet-stream' }, body: texto })).json();
+  const b = 'est' + Math.random().toString(36).slice(2);
+  const meta = JSON.stringify({ name: nome, parents: ['appDataFolder'] });
+  const corpo = `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: application/octet-stream\r\n\r\n${texto}\r\n--${b}--`;
+  return (await drive('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${b}` }, body: corpo })).json();
+}
+const COPIA = 'plano-de-estudos-copia-', COPIAS_MAX = 14;
+async function listarCopias() {
+  const q = encodeURIComponent(`name contains '${COPIA}' and trashed=false`);
+  const j = await (await drive(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,name)&pageSize=100`)).json();
+  return (j.files || []).filter(f => f.name.startsWith(COPIA)).sort((a, b) => b.name.localeCompare(a.name));
+}
+async function copiaDiaria(senha) {
+  const dia = hoje(), nome = `${COPIA}${dia}.enc`, copias = await listarCopias();
+  if (!copias.some(c => c.name === nome)) await gravarArquivo(await cifrar({ modificadoEm: S.modificadoEm, dados: semData(S) }, senha), null, nome);
+  for (const c of copias.filter(c => c.name !== nome).slice(COPIAS_MAX - 1)) await drive(`https://www.googleapis.com/drive/v3/files/${c.id}`, { method: 'DELETE' });
+  syncCfg.ultimaCopia = dia; lsSet(SYNC_KEY, syncCfg);
+}
+const diaDaCopia = c => c.name.slice(COPIA.length, COPIA.length + 10);
+let copiasVistas = null;
+async function verCopias() { try { copiasVistas = await listarCopias(); } catch (e) { return setSync('Não listou as cópias: ' + e.message); } render(); }
+async function restaurarCopia(id) {
+  const c = (copiasVistas || []).find(x => x.id === id);
+  if (!c) return;
+  const dia = fmt(diaDaCopia(c));
+  if (!confirm(`Restaurar a cópia de ${dia}?\n\nO progresso volta a ser o daquele dia, neste e nos outros aparelhos. O que foi feito depois se perde.`)) return;
+  try {
+    const txt = await (await drive(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`)).text();
+    let pacote, senha = ssGet('est-senha');
+    try { pacote = await decifrar(txt, senha); } catch (e) {
+      senha = prompt('Essa cópia foi feita com outra senha de sincronização. Digite a senha daquela época:');
+      if (senha == null) return;
+      try { pacote = await decifrar(txt, senha); } catch (e2) { return setSync('Senha incorreta: a cópia não foi restaurada.'); }
+    }
+    S = Object.assign(blank(), pacote.dados); commit(); setSync(`Cópia de ${dia} restaurada.`);
+  } catch (e) { setSync('Não restaurou: ' + e.message); }
+}
+const igual = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+const ehObj = x => x !== null && typeof x === 'object' && !Array.isArray(x);
+const listaComId = a => Array.isArray(a) && a.every(x => ehObj(x) && x.id !== undefined);
+const semData = o => { const { modificadoEm, ...dados } = o; return dados; };
+const hora = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+// Mesclagem em três vias: base (última versão sincronizada), este aparelho e o Drive. Só há conflito quando os dois mudaram o mesmo ponto.
+function mesclarValor(b, l, r, caminho, conflitos, pref) {
+  if (igual(l, r)) return l;
+  if (igual(b, l)) return r;
+  if (igual(b, r)) return l;
+  if (ehObj(l) && ehObj(r) && (b === undefined || ehObj(b))) {
+    const out = {};
+    new Set([...Object.keys(l), ...Object.keys(r), ...Object.keys(b || {})]).forEach(k => {
+      const v = mesclarValor((b || {})[k], l[k], r[k], caminho + '.' + k, conflitos, pref);
+      if (v !== undefined) out[k] = v;
+    });
+    return out;
+  }
+  if (listaComId(l) && listaComId(r) && (b === undefined || listaComId(b))) return mesclarListas(b || [], l, r, caminho, conflitos, pref);
+  conflitos.push(caminho);
+  return pref === 'remote' ? r : l;
+}
+function mesclarListas(b, l, r, caminho, conflitos, pref) {
+  const mapa = a => new Map(a.map(x => [x.id, x]));
+  const B = mapa(b), L = mapa(l), R = mapa(r), out = [];
+  new Set([...L.keys(), ...R.keys(), ...B.keys()]).forEach(id => {
+    const bi = B.get(id), li = L.get(id), ri = R.get(id), c = caminho + '#' + id;
+    if (li === undefined && ri === undefined) return;
+    if (bi === undefined) { out.push(li !== undefined && ri !== undefined ? mesclarValor(undefined, li, ri, c, conflitos, pref) : (li !== undefined ? li : ri)); return; }
+    if (li === undefined) { if (!igual(bi, ri)) { conflitos.push(c); if (pref === 'remote') out.push(ri); } return; }
+    if (ri === undefined) { if (!igual(bi, li)) { conflitos.push(c); if (pref === 'local') out.push(li); } return; }
+    out.push(mesclarValor(bi, li, ri, c, conflitos, pref));
+  });
+  return out;
+}
+const baseSync = () => lsGet('est-base', null) || semData(blank());
+async function sincronizar() {
+  if (sincronizando) { pendente = true; return; }
+  const senha = ssGet('est-senha');
+  if (!syncCfg.clientId) return setSync('Salve o Client ID do Google Cloud.');
+  if (!tokenValido()) return setSync('Conecte ao Google Drive.');
+  if (!senha) return setSync('Informe a senha de sincronização e conecte de novo.');
+  sincronizando = true;
+  setSync('Sincronizando…');
+  try {
+    const local = semData(S), base = baseSync(), id = await acharArquivo();
+    let remoto = null;
+    if (id) {
+      const txt = await (await drive(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`)).text();
+      let pacote;
+      try { pacote = await decifrar(txt, senha); } catch (e) { throw new Error('senha de sincronização incorreta'); }
+      remoto = semData(pacote.dados);
+    }
+    let final = local;
+    if (remoto) {
+      const conflitos = [];
+      final = mesclarValor(base, local, remoto, '', conflitos, 'local');
+      if (conflitos.length && confirm(`Há ${conflitos.length} ponto(s) alterado(s) nos dois aparelhos.\n\nOK = usar a versão do Drive nesses pontos.\nCancelar = manter a versão deste aparelho.`)) final = mesclarValor(base, local, remoto, '', [], 'remote');
+    }
+    if (!igual(semData(S), local)) { pendente = true; return setSync('O progresso mudou durante a sincronização; sincronizando de novo…'); }
+    S = Object.assign(blank(), final);
+    S.modificadoEm = agoraISO();
+    salvar(); render();
+    if (!remoto || !igual(final, remoto)) {
+      const meta = await gravarArquivo(await cifrar({ modificadoEm: S.modificadoEm, dados: semData(S) }, senha), id);
+      syncCfg.arquivoId = meta.id; lsSet(SYNC_KEY, syncCfg);
+    }
+    lsSet('est-base', final);
+    if (syncCfg.ultimaCopia !== hoje()) { try { await copiaDiaria(senha); } catch (e) { /* tenta na próxima */ } }
+    setSync('Sincronizado às ' + hora());
+  } catch (e) {
+    const rede = e instanceof TypeError;
+    setSync('Não sincronizou: ' + (rede ? 'sem conexão com o Drive' : e.message));
+    if (rede) { clearTimeout(novaTentativa); novaTentativa = setTimeout(agendarEnvio, 30000); }
+    if (!tokenValido()) renovarSePreciso();
+  } finally {
+    sincronizando = false;
+    if (pendente) { pendente = false; agendarEnvio(); }
+    $('aviso').innerHTML = avisoSync();
+  }
+}
+function agendarEnvio() {
+  if (!syncPronto()) return;
+  if (!tokenValido()) { renovarSePreciso(); return; }
+  if (sincronizando) { pendente = true; return; }
+  clearTimeout(envioAgendado);
+  envioAgendado = setTimeout(sincronizar, 1500);
+}
+async function trocarSenha() {
+  const nova = $('sync-nova').value;
+  if (nova.length < 6) return setSync('A nova senha precisa ter pelo menos 6 caracteres.');
+  if (!tokenValido() || !ssGet('est-senha')) return setSync('Conecte ao Google Drive antes de trocar a senha.');
+  if (!confirm('Trocar a senha de sincronização? Depois, use a nova senha em todos os aparelhos.')) return;
+  await sincronizar();
+  if (syncEstado.startsWith('Não sincronizou')) return;
+  try {
+    const id = await acharArquivo();
+    if (!id) return setSync('Nada para recifrar ainda: sincronize primeiro.');
+    await gravarArquivo(await cifrar({ modificadoEm: S.modificadoEm, dados: semData(S) }, nova), id);
+    ssSet('est-senha', nova);
+    setSync('Senha trocada. Nos outros aparelhos, digite a nova senha e conecte de novo.');
+    render();
+  } catch (e) { setSync('Não trocou a senha: ' + e.message); }
+}
+function blocoSync() {
+  const conectado = tokenValido();
+  return `
+    <section class="card"><h2>Sincronização entre aparelhos (Google Drive)</h2>
+      <p class="muted">O progresso vai para uma pasta privada do app no seu Drive, cifrado com a sua senha. Pode usar o mesmo Client ID do Controle Financeiro, desde que o endereço abaixo esteja cadastrado nele no Google Cloud.</p>
+      <form class="fields" onsubmit="salvarClientId(event)">
+        <label>Client ID do Google Cloud <input id="sync-cid" value="${esc(syncCfg.clientId || '')}" placeholder="xxxxx.apps.googleusercontent.com"></label>
+        <button>Salvar Client ID</button>
+      </form>
+      <p class="muted" style="overflow-wrap:anywhere">Endereço de retorno e origem que devem estar cadastrados: <code>${esc(redirectUri())}</code></p>
+      <form class="fields" onsubmit="event.preventDefault();conectarDrive()">
+        <label>Senha de sincronização <input id="sync-senha" type="password" autocomplete="off" value="${esc(ssGet('est-senha') || '')}"></label>
+        <div class="row"><button>${conectado ? 'Sincronizar agora' : 'Conectar ao Google Drive'}</button>${conectado ? '<button type="button" class="ghost" onclick="desconectarDrive()">Desconectar</button>' : ''}</div>
+      </form>
+      ${conectado ? `<form class="fields" onsubmit="event.preventDefault();trocarSenha()"><label>Nova senha de sincronização <input id="sync-nova" type="password" autocomplete="off"></label><button>Trocar senha</button></form>
+        <div class="row" style="margin-top:10px"><button type="button" class="small" onclick="verCopias()">Ver cópias diárias no Drive</button></div>
+        ${copiasVistas ? `<div style="margin-top:8px">${copiasVistas.length ? `<table><tbody>${copiasVistas.map(c => `<tr><td>Cópia de ${fmt(diaDaCopia(c))}</td><td class="num"><button class="small" onclick="restaurarCopia('${c.id}')">Restaurar</button></td></tr>`).join('')}</tbody></table>` : '<p class="muted">Nenhuma cópia ainda. A primeira é feita na próxima sincronização.</p>'}</div>` : ''}` : ''}
+      <p class="muted" id="syncstatus">${esc(syncEstado || (conectado ? 'Conectado.' : 'Não conectado.'))}</p>
+    </section>`;
+}
+
+/* ---------- início ---------- */
+$('fx').onchange = e => importarPlanilha(e.target);
+$('fj').onchange = e => importarJSON(e.target);
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+aplicarTema();
+lerRetornoOAuth();
+try { const k = localStorage.getItem('est-aba'); if (k) aba = k; } catch (e) {}
+render();
+if (syncPronto()) { if (tokenValido()) sincronizar(); else renovarSePreciso(); }
+document.addEventListener('visibilitychange', () => { if (document.hidden || !syncPronto()) return; if (tokenValido()) sincronizar(); else renovarSePreciso(); });
+window.addEventListener('online', () => { if (syncPronto() && tokenValido()) sincronizar(); });
+setInterval(() => { if (syncPronto() && !tokenValido() && !renovarSePreciso()) $('aviso').innerHTML = avisoSync(); }, 60000);
+</script>
+</body>
+</html>
