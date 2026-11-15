@@ -8,7 +8,15 @@ after(async () => { await fecharNavegador(); });
 // Um pouco de progresso em cada plano, para as telas mostrarem listas, revisões e gráficos preenchidos.
 const POPULAR = `(() => {
   S = blank();
-  PLANOS.forEach(p => {
+  // um plano criado no app, com Discursiva e TAF, para as telas desse tipo de plano
+  S.custom['c-teste'] = { id: 'c-teste', nome: 'Plano criado no app', banca: 'FGV', inicio: '2027-01-04', ritmo: 2, voltas: { v2: true },
+    escrita: { nome: 'Redação', temas: [['Tema um', 'Lei 1', 'Aula 1']] }, taf: 'pcpe',
+    disciplinas: [{ k: 'D1', nome: 'Português', peso: 4, topicos: [{ id: 'D1-001', t: 'Crase', p: 12 }, { id: 'D1-002', t: 'Regência' }] },
+                  { k: 'D2', nome: 'Direito Penal', peso: 2, topicos: [{ id: 'D2-001', t: 'Teoria do crime', ext: 1 }] }] };
+  montarRegistro();
+  const d0 = D(PL['c-teste']); d0.tempos.push({ id: 'tt', data: '2027-01-05', min: 50, sessao: 'D1-001', disc: 'D1' }); d0.anotacoes['D1-001'] = 'nota';
+  d0.cfg.folgas = { '2027-01-06': 'Feriado' };
+  listaPlanos().forEach(p => {
     const d = D(p);
     p.sessoes.slice(0, 12).forEach((s, i) => { d.feitas[s.id] = addD(p.inicio, Math.floor(i / 2)); });
     d.revs[p.sessoes[0].id + '@1'] = hoje();
@@ -24,7 +32,8 @@ for (const [nome, largura, altura] of [['computador', 1280, 900], ['celular', 37
   test(`todas as abas de todos os planos · ${nome}`, async () => {
     const pg = await abrirApp({ largura, altura, hoje: '2027-02-10' });
     await avaliar(pg, POPULAR);
-    const planos = await avaliar(pg, 'PLANOS.map(p => p.id)');
+    const planos = await avaliar(pg, 'listaPlanos().map(p => p.id)');
+    assert.ok(planos.includes('c-teste'));
     for (const id of planos) {
       await avaliar(pg, `(trocarPlano('${id}'), true)`);
       const abas = await avaliar(pg, `ABAS().map(a => a[0]).filter(k => k !== '-')`);
@@ -38,6 +47,16 @@ for (const [nome, largura, altura] of [['computador', 1280, 900], ['celular', 37
       assert.equal(await avaliar(pg, `$('modal').hidden`), false, id + ': detalhe da sessão não abriu');
       await avaliar(pg, 'fecharModal()');
     }
+    // editor de planos, vazio e com um plano carregado
+    await avaliar(pg, `(novoPlano(), true)`);
+    assert.ok(await avaliar(pg, `document.documentElement.scrollWidth <= innerWidth`), 'editor: rolagem lateral');
+    await avaliar(pg, `(editarPlano('c-teste'), true)`);
+    assert.equal(await pg.locator('[id^=ed-dn-]').count(), 2);
+    assert.ok(await avaliar(pg, `document.documentElement.scrollWidth <= innerWidth`), 'editor com plano: rolagem lateral');
+    // cronômetro aberto não cria rolagem lateral
+    await avaliar(pg, `(iniciarCrono('D1-001', 25), ir('inicio'), true)`);
+    await pg.waitForTimeout(1100);
+    assert.ok(await avaliar(pg, `document.documentElement.scrollWidth <= innerWidth && $('crono').getBoundingClientRect().right <= innerWidth`), 'cronômetro fora da tela');
     assert.deepEqual(pg.erros, []);
     await pg.fechar();
   });

@@ -1,7 +1,7 @@
 // Service worker: guarda o app para abrir sem internet.
 // Usa a rede primeiro e sempre confere com o servidor (cache: 'no-cache'), para que uma versão nova
 // apareça na próxima abertura, sem esperar os 10 minutos de cache do GitHub Pages. Mesmo esquema do Controle Financeiro.
-const CACHE = 'plano-de-estudos-v1';
+const CACHE = 'plano-de-estudos-v2';
 const ARQUIVOS = ['./', './index.html', './planos.js', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

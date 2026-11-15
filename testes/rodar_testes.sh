@@ -10,7 +10,7 @@ node -e 'require.resolve("playwright"); require.resolve("xlsx")' 2>/dev/null || 
 [ "$falta" = 0 ] || exit 1
 
 node --test --test-reporter=spec --test-concurrency=1 \
-  testes/calculos.test.js testes/telas.test.js testes/fluxo.test.js testes/importar.test.js testes/sync.test.js testes/sw.test.js
+  testes/calculos.test.js testes/telas.test.js testes/fluxo.test.js testes/importar.test.js testes/planos.test.js testes/longo-prazo.test.js testes/sync.test.js testes/sw.test.js
 status=$?
 echo
 if [ "$status" = 0 ]; then echo 'TODOS OS TESTES PASSARAM.'; else echo 'HÁ TESTES FALHANDO.'; fi

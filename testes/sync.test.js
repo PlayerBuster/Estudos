@@ -88,6 +88,19 @@ test('alterações diferentes nos dois aparelhos são combinadas, inclusive apag
   await a1.fecharTudo();
 });
 
+test('planos criados no app vão para o outro aparelho, com o progresso', async () => {
+  const drive = driveFalso();
+  const [a1, a2] = await doisAparelhos(drive);
+  await avaliar(a1, `(() => { novoPlano(); ed.nome = 'Plano do celular'; ed.disciplinas = [{ k: null, nome: 'Civil', peso: 3, txt: 'Pessoas\\nBens' }]; salvarPlano();
+    D().feitas['D1-001'] = '2027-01-05'; commit(); return true; })()`);
+  await sincronizarJa(a1); await sincronizarJa(a2);
+  const r = await avaliar(a2, `(() => { montarRegistro(); const id = Object.keys(S.custom)[0]; trocarPlano(id); return { nome: P().nome, n: P().sessoes.length, feitas: Object.keys(D().feitas) }; })()`);
+  assert.equal(r.nome, 'Plano do celular');
+  assert.equal(r.n, 2 + 2);
+  assert.deepEqual(r.feitas, ['D1-001']);
+  await a1.fecharTudo();
+});
+
 test('senha errada não altera nada e avisa', async () => {
   const drive = driveFalso();
   const [a1, a2] = await doisAparelhos(drive);
