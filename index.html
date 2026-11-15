@@ -1595,6 +1595,7 @@ function irAoGoogle(silencioso) {
   const id = (syncCfg.clientId || '').trim();
   if (!id) return;
   lsSet('est-renovacao', Date.now());
+  lsSet('est-tentativa', { quando: Date.now(), silencioso: !!silencioso });
   location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
     client_id: id, redirect_uri: redirectUri(), response_type: 'token', scope: SYNC_SCOPE, include_granted_scopes: 'true', ...(silencioso ? { prompt: 'none' } : {})
   });
@@ -1607,15 +1608,43 @@ function renovarSePreciso() {
   irAoGoogle(true);
   return true;
 }
+// Guarda o motivo quando o Google não devolve o acesso, para explicar na tela o que fazer.
+// Quando o Google para numa página de erro (ex.: redirect_uri_mismatch), ele não volta ao app; ao voltar
+// pelo botão do navegador, o app percebe a tentativa sem resposta.
 function lerRetornoOAuth() {
   const p = new URLSearchParams(location.hash.slice(1));
   const t = p.get('access_token'), erro = p.get('error');
-  if (!t && !erro) return;
-  if (t) { ssSet('est-token', t); ssSet('est-exp', String(Date.now() + (Number(p.get('expires_in')) || 3600) * 1000 - 60000)); lsSet('est-renovacao', 0); }
-  else renovacaoFalhou = true;
+  const tentativa = lsGet('est-tentativa', null);
+  lsSet('est-tentativa', null);
+  if (!t && !erro) {
+    if (tentativa && !tentativa.silencioso && Date.now() - tentativa.quando < 15 * 60000 && !tokenValido()) lsSet('est-erro-oauth', { erro: 'sem_retorno', quando: Date.now() });
+    return;
+  }
+  if (t) { ssSet('est-token', t); ssSet('est-exp', String(Date.now() + (Number(p.get('expires_in')) || 3600) * 1000 - 60000)); lsSet('est-renovacao', 0); lsSet('est-erro-oauth', null); }
+  else { renovacaoFalhou = true; lsSet('est-erro-oauth', { erro, quando: Date.now(), silencioso: !!(tentativa && tentativa.silencioso) }); }
   history.replaceState(null, '', location.pathname + location.search);
 }
+function textoErroOAuth() {
+  const e = lsGet('est-erro-oauth', null);
+  if (!e || !e.erro || tokenValido()) return '';
+  const ret = redirectUri();
+  return {
+    sem_retorno: `Você voltou do Google sem conectar. Se o Google mostrou "Erro 400: redirect_uri_mismatch", o endereço ${ret} não está cadastrado como URI de redirecionamento no Client ID informado aqui. Confira se o Client ID é o mesmo em que você cadastrou o endereço.`,
+    access_denied: 'O Google recusou o acesso. Se você não cancelou, abra o Google Cloud, vá em Tela de permissão OAuth (ou Público-alvo) e adicione o seu e-mail em Usuários de teste.',
+    interaction_required: 'O Google pediu uma confirmação. Toque em Conectar ao Google Drive (ou Reconectar) e confirme.',
+    consent_required: 'O Google pediu uma confirmação. Toque em Conectar ao Google Drive (ou Reconectar) e confirme.',
+    login_required: 'Entre na sua conta Google e toque em Conectar ao Google Drive de novo.',
+    invalid_client: 'O Google não reconheceu o Client ID. Copie de novo o ID do cliente no Google Cloud (termina em .apps.googleusercontent.com).',
+    unauthorized_client: 'Esse Client ID não aceita este tipo de login. Ele precisa ser do tipo Aplicativo da Web.',
+  }[e.erro] || `O Google respondeu "${e.erro}". Confira o Client ID e os endereços cadastrados no Google Cloud.`;
+}
+function copiarTexto(t, botao) {
+  const ok = () => { if (botao) { botao.textContent = 'Copiado'; setTimeout(() => { botao.textContent = 'Copiar'; }, 1500); } };
+  try { navigator.clipboard.writeText(t).then(ok, () => prompt('Copie o texto:', t)); } catch (e) { prompt('Copie o texto:', t); }
+}
 function avisoSync() {
+  const errOauth = textoErroOAuth();
+  if (errOauth && lsGet('est-erro-oauth', {}).erro !== 'interaction_required') return `<div class="aviso"><span>Sincronização: ${esc(errOauth)}</span><button class="small" onclick="ir('ajustes')">Ver sincronização</button></div>`;
   if (!syncPronto()) return '';
   if (!tokenValido()) return `<div class="aviso"><span>Sincronização pausada: o acesso do Google precisa ser renovado. O progresso fica salvo neste aparelho e vai para o Drive ao reconectar.</span><button class="small" onclick="irAoGoogle(false)">Reconectar</button></div>`;
   if (syncEstado.startsWith('Não sincronizou')) return `<div class="aviso"><span>${esc(syncEstado)}. O app tenta de novo sozinho.</span><button class="small" onclick="sincronizar()">Tentar agora</button></div>`;
@@ -1627,7 +1656,12 @@ function desconectarDrive() {
   setSync('Desconectado. O progresso continua salvo neste aparelho.');
   render();
 }
-function salvarClientId(e) { e.preventDefault(); syncCfg.clientId = $('sync-cid').value.trim(); lsSet(SYNC_KEY, syncCfg); setSync('Client ID salvo.'); render(); }
+function salvarClientId(e) {
+  e.preventDefault();
+  const v = $('sync-cid').value.trim();
+  if (v && !/^[\w-]+\.apps\.googleusercontent\.com$/.test(v)) return setSync('Esse não parece um Client ID: ele termina em .apps.googleusercontent.com.');
+  syncCfg.clientId = v; lsSet(SYNC_KEY, syncCfg); lsSet('est-erro-oauth', null); setSync('Client ID salvo.'); render();
+}
 async function drive(url, opts = {}) {
   if (!tokenValido()) throw new Error('sessão do Google expirou; conecte de novo');
   const r = await fetch(url, { ...opts, headers: { Authorization: 'Bearer ' + ssGet('est-token'), ...(opts.headers || {}) } });
@@ -1791,7 +1825,10 @@ function blocoSync() {
         <label>Client ID do Google Cloud <input id="sync-cid" value="${esc(syncCfg.clientId || '')}" placeholder="xxxxx.apps.googleusercontent.com"></label>
         <button>Salvar Client ID</button>
       </form>
-      <p class="muted" style="overflow-wrap:anywhere">Endereço de retorno e origem que devem estar cadastrados: <code>${esc(redirectUri())}</code></p>
+      <div class="dica" style="display:block;margin-top:8px"><b>Cadastre no mesmo Client ID, no Google Cloud:</b>
+        <div class="row" style="margin-top:6px"><span>Origem JavaScript autorizada:</span><code>${esc(location.origin)}</code><button type="button" class="small ghost" onclick="copiarTexto('${esc(location.origin)}', this)">Copiar</button></div>
+        <div class="row" style="margin-top:4px"><span>URI de redirecionamento autorizado:</span><code>${esc(redirectUri())}</code><button type="button" class="small ghost" onclick="copiarTexto('${esc(redirectUri())}', this)">Copiar</button></div></div>
+      ${textoErroOAuth() ? `<p class="neg">${esc(textoErroOAuth())}</p>` : ''}
       <form class="fields" onsubmit="event.preventDefault();conectarDrive()">
         <label>Senha de sincronização <input id="sync-senha" type="password" autocomplete="off" value="${esc(ssGet('est-senha') || '')}"></label>
         <div class="row"><button>${conectado ? 'Sincronizar agora' : 'Conectar ao Google Drive'}</button>${conectado ? '<button type="button" class="ghost" onclick="desconectarDrive()">Desconectar</button>' : ''}</div>
@@ -1818,6 +1855,8 @@ setInterval(() => desenharCrono(), 1000);
 if (syncPronto()) { if (tokenValido()) sincronizar(); else renovarSePreciso(); }
 document.addEventListener('visibilitychange', () => { if (document.hidden || !syncPronto()) return; if (tokenValido()) sincronizar(); else renovarSePreciso(); });
 window.addEventListener('online', () => { if (syncPronto() && tokenValido()) sincronizar(); });
+// Voltar do Google pelo botão do navegador pode restaurar a página do cache, sem rodar o início de novo.
+window.addEventListener('pageshow', e => { if (e.persisted) { lerRetornoOAuth(); render(); } });
 setInterval(() => { if (syncPronto() && !tokenValido() && !renovarSePreciso()) $('aviso').innerHTML = avisoSync(); }, 60000);
 </script>
 </body>

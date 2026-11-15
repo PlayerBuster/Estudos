@@ -121,3 +121,32 @@ test('sem internet: avisa e tenta de novo depois', async () => {
   assert.ok(await avaliar(pg, 'novaTentativa !== null'));
   await pg.context().close();
 });
+
+test('retorno do Google: erro explicado na tela, volta sem resposta e acesso recebido', async () => {
+  const { URL_APP } = require('./lib');
+  const pg = await abrirApp();
+  await avaliar(pg, `(syncCfg.clientId = 'x.apps.googleusercontent.com', lsSet(SYNC_KEY, syncCfg), lsSet('est-tentativa', { quando: Date.now(), silencioso: false }), true)`);
+  await pg.goto(URL_APP + '?r=1#error=access_denied');
+  assert.match(await pg.locator('#aviso').innerText(), /Usuários de teste/);
+  assert.equal(await avaliar(pg, 'location.hash'), '');
+  // tentativa explícita e volta sem resposta (página de erro do Google, botão voltar)
+  await avaliar(pg, `(lsSet('est-erro-oauth', null), lsSet('est-tentativa', { quando: Date.now(), silencioso: false }), true)`);
+  await pg.goto(URL_APP + '?r=2');
+  assert.match(await pg.locator('#aviso').innerText(), /redirect_uri_mismatch/);
+  await avaliar(pg, `(ir('ajustes'), true)`);
+  assert.match(await pg.locator('#conteudo').innerText(), /URI de redirecionamento autorizado/);
+  // confirmação pedida no modo silencioso não vira aviso no topo
+  await avaliar(pg, `(lsSet('est-tentativa', { quando: Date.now(), silencioso: true }), true)`);
+  await pg.goto(URL_APP + '?r=3#error=interaction_required');
+  assert.doesNotMatch(await pg.locator('#aviso').innerText(), /Sincronização:/);
+  // acesso recebido limpa o erro
+  await pg.goto(URL_APP + '?r=4#access_token=abc&expires_in=3600');
+  assert.equal(await avaliar(pg, `lsGet('est-erro-oauth', null)`), null);
+  assert.equal(await avaliar(pg, 'tokenValido()'), true);
+  // Client ID inválido não é salvo
+  await avaliar(pg, `(ir('ajustes'), true)`);
+  await pg.fill('#sync-cid', 'meu-id-errado');
+  await pg.click('text=Salvar Client ID');
+  assert.match(await pg.locator('#syncstatus').innerText(), /não parece um Client ID/);
+  await pg.fechar();
+});
